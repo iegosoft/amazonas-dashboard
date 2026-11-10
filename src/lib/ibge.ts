@@ -174,25 +174,41 @@ function writeCache(data: Dataset) {
   }
 }
 
-export async function loadDataset(signal?: AbortSignal): Promise<Dataset> {
-  const cached = readCache()
-  if (cached) return cached
+/** Respostas do IBGE como chegaram, antes de qualquer interpretação. */
+export interface RawIbge {
+  meta: LocalidadeMunicipio[]
+  pop: AgregadoVariavel[]
+  censo: AgregadoVariavel[]
+  pib: AgregadoVariavel[]
+  geo: MunGeo
+}
 
-  const [meta, popJson, censoJson, pibJson, geo] = await Promise.all([
+export async function fetchRaw(signal?: AbortSignal): Promise<RawIbge> {
+  const [meta, pop, censo, pib, geo] = await Promise.all([
     getJson<LocalidadeMunicipio[]>(ENDPOINTS.municipios, signal),
     getJson<AgregadoVariavel[]>(ENDPOINTS.pop, signal),
     getJson<AgregadoVariavel[]>(ENDPOINTS.censo, signal),
     getJson<AgregadoVariavel[]>(ENDPOINTS.pib, signal),
     getJson<MunGeo>(ENDPOINTS.malha, signal),
   ])
+  return { meta, pop, censo, pib, geo }
+}
 
+export function assembleDataset(raw: RawIbge): Dataset {
   const { municipios, periods } = buildMunicipios(
-    meta,
-    parseAgregado(popJson),
-    parseAgregado(censoJson),
-    parseAgregado(pibJson),
+    raw.meta,
+    parseAgregado(raw.pop),
+    parseAgregado(raw.censo),
+    parseAgregado(raw.pib),
   )
-  const data: Dataset = { municipios, periods, geo: rewindForD3(geo) }
+  return { municipios, periods, geo: rewindForD3(raw.geo) }
+}
+
+export async function loadDataset(signal?: AbortSignal): Promise<Dataset> {
+  const cached = readCache()
+  if (cached) return cached
+
+  const data = assembleDataset(await fetchRaw(signal))
   writeCache(data)
   return data
 }

@@ -25,8 +25,9 @@ React 19 · TypeScript · Vite · Tailwind CSS v4 · d3-geo / d3-scale / d3-arra
 ```bash
 npm install
 npm run dev      # desenvolvimento
-npm test         # testes (parser do IBGE, derivados, classes, renderização)
+npm test         # testes (parser do IBGE, validação, derivados, renderização)
 npm run build    # produção
+npm run data     # coleta e valida os dados do IBGE em public/data/
 ```
 
 ## Fontes de dados (IBGE)
@@ -41,11 +42,23 @@ npm run build    # produção
 
 PIB per capita = PIB ÷ população do Censo 2022. Crescimento = estimativa mais recente ÷ Censo 2022.
 
+### Validação
+
+`npm run data` só grava os arquivos se os dados passarem em todas as checagens (`src/lib/validate.ts`); caso contrário, sai com erro e mantém os anteriores:
+
+- formato das respostas do IBGE (variáveis presentes, 62 municípios por série);
+- 62 municípios com código `13xxxxx`, cada um com geometria no mapa;
+- população, Censo, densidade e PIB presentes e positivos em todos;
+- participações setoriais somando 100%;
+- população total do estado numa faixa plausível;
+- em relação à coleta anterior: nenhum ano volta no tempo, nenhum município muda mais de 20% de população e o PIB do estado não muda mais de 40%.
+
 ## Estrutura
 
 ```
+scripts/      fetch-data.ts (coleta + validação, `npm run data`)
 src/
-  lib/        ibge.ts (fetch + parsing), indicators.ts, stats.ts, format.ts
+  lib/        ibge.ts (fetch + parsing), validate.ts, indicators.ts, stats.ts, format.ts
   components/ MapView, Ranking, Detail, Kpis
   hooks.ts    dados, tema
 ```
