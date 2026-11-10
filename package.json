@@ -5,12 +5,15 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "predev": "npm run data:pull",
     "dev": "vite",
+    "prebuild": "npm run data:pull",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "data": "tsx scripts/fetch-data.ts"
+    "data": "tsx scripts/fetch-data.ts",
+    "data:pull": "tsx scripts/pull-data.ts"
   },
   "dependencies": {
     "d3-array": "^3.2.5",

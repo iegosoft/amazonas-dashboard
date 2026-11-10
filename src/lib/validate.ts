@@ -19,9 +19,9 @@ export interface Report {
   warnings: string[]
 }
 
-/** Lista curta de nomes para mensagens: "A, B, C e mais 4". */
-const names = (ms: Municipio[], max = 5) =>
-  ms.length <= max ? ms.map((m) => m.nome).join(', ') : `${ms.slice(0, max).map((m) => m.nome).join(', ')} e mais ${ms.length - max}`
+/** Lista curta para mensagens: "A, B, C e mais 4". */
+const short = (xs: string[], max = 5) => (xs.length <= max ? xs.join(', ') : `${xs.slice(0, max).join(', ')} e mais ${xs.length - max}`)
+const names = (ms: Municipio[]) => short(ms.map((m) => m.nome))
 
 /**
  * Confere o formato de uma resposta de agregado antes de interpretá-la, para que uma
@@ -88,7 +88,7 @@ export function validateDataset(next: Dataset, prev?: Dataset): Report {
   const semMalha = ms.filter((m) => !geoIds.has(m.id))
   if (semMalha.length) errors.push(`Municípios sem geometria no mapa: ${names(semMalha)}`)
   const sobra = [...geoIds].filter((id) => !ids.has(id))
-  if (sobra.length) errors.push(`Geometrias sem município correspondente: ${sobra.join(', ')}`)
+  if (sobra.length) errors.push(`Geometrias sem município correspondente: ${short(sobra)}`)
 
   // Indicadores essenciais presentes e positivos
   for (const k of CORE) {

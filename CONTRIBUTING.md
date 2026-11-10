@@ -106,12 +106,13 @@ Exemplos:
 | 🔧 | `chore` | Manutenção e configuração que não entram nos outros tipos |
 | 🔥 | `chore` | Remoção de código ou arquivos |
 | 🔖 | `chore` | Commit de versão (`chore(release): vX.Y.Z`) |
+| 📊 | `data` | Atualização dos dados publicados (só na branch `data`) |
 | ⏪️ | `revert` | Desfaz um commit anterior |
 | 💥 | `<tipo>!` | Mudança que quebra compatibilidade (junto com `BREAKING CHANGE:` no rodapé) |
 
 ### Escopos
 
-`mapa`, `ranking`, `detalhe`, `kpis`, `ibge`, `indicadores`, `ui`, `tema`, `deps`, `readme`, `release`. O escopo é opcional quando a mudança é geral.
+`mapa`, `ranking`, `detalhe`, `kpis`, `ibge`, `dados`, `indicadores`, `ui`, `tema`, `deps`, `readme`, `release`. O escopo é opcional quando a mudança é geral.
 
 ### Regras
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { clearCache, loadDataset } from './lib/ibge'
+import { loadDataset } from './lib/data'
 import type { Dataset } from './lib/types'
 
 export type DataState =
@@ -23,7 +23,6 @@ export function useDataset(): [DataState, () => void] {
   }, [attempt])
 
   const retry = useCallback(() => {
-    clearCache()
     setState({ status: 'loading' })
     setAttempt((n) => n + 1)
   }, [])
