@@ -126,3 +126,28 @@ Para ver o modelo ao escrever o commit no editor, rode uma vez:
 ```bash
 git config commit.template .gitmessage
 ```
+
+## Atualização automática dos dados
+
+O workflow `.github/workflows/dados.yml` roda toda segunda-feira (08:00 em Manaus):
+
+1. Coleta os dados do IBGE e valida contra a última publicação (`npm run data`).
+2. **Sem mudanças:** encerra.
+3. **Dados novos e válidos:** faz commit na branch `data` (`📊 data: ...`, com o resumo do que mudou) e dispara o deploy.
+4. **Falha (IBGE fora do ar, formato novo, validação):** nada é publicado; abre uma issue "⚠️ Falha na atualização automática dos dados" com o relatório, ou comenta na que já estiver aberta. Na próxima execução bem-sucedida, essa issue é fechada sozinha.
+
+Commits automáticos saem no perfil do dono do repositório. A branch `data` é escrita só por esse workflow: não faça commits nela à mão.
+
+### Rodar manualmente
+
+Em **Actions → Atualização dos dados → Run workflow**, ou:
+
+```bash
+gh workflow run dados.yml                                  # coleta normal
+gh workflow run dados.yml -f forcar_publicacao=true        # republica mesmo sem mudanças
+gh workflow run dados.yml -f simular_falha=true            # testa o alerta
+```
+
+### Deploy
+
+Para o deploy ser disparado depois de cada atualização, crie um *Deploy Hook* na Vercel (Project → Settings → Git → Deploy Hooks, branch `main`) e salve a URL como secret `VERCEL_DEPLOY_HOOK` no GitHub (Settings → Secrets and variables → Actions). Sem o secret, os dados são publicados na branch `data` e entram no próximo deploy.

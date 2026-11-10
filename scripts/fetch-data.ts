@@ -4,6 +4,7 @@
  *   npm run data                      grava em public/data/
  *   npm run data -- --out <pasta>     grava em outra pasta
  *   npm run data -- --summary <md>    também escreve um resumo em Markdown
+ *   npm run data -- --force           grava mesmo sem mudanças (renova fetchedAt)
  *
  * Saída: 0 = dados válidos (gravados se mudaram) · 1 = falha (nada é gravado).
  * No GitHub Actions, escreve changed=true|false em $GITHUB_OUTPUT.
@@ -19,6 +20,7 @@ const { values: args } = parseArgs({
   options: {
     out: { type: 'string', default: 'public/data' },
     summary: { type: 'string' },
+    force: { type: 'boolean', default: false },
   },
 })
 const outDir = path.resolve(args.out!)
@@ -72,6 +74,7 @@ const report = validateDataset(next, prev)
 if (report.errors.length) await fail('Os dados não passaram na validação', report.errors)
 
 const changed =
+  args.force ||
   !prev ||
   JSON.stringify({ p: prev.periods, m: prev.municipios }) !== JSON.stringify({ p: next.periods, m: next.municipios }) ||
   JSON.stringify(prev.geo) !== JSON.stringify(next.geo)
@@ -93,7 +96,9 @@ if (!changed) {
 
   log('## ✅ Dados do IBGE atualizados')
   log()
-  for (const line of describeChanges(prev, next)) log(`- ${line}`)
+  const lines = describeChanges(prev, next)
+  if (!lines.length) lines.push('Republicação manual: os dados não mudaram desde a última coleta.')
+  for (const line of lines) log(`- ${line}`)
   log()
   log(`Períodos: população ${next.periods.pop} · Censo ${next.periods.censo} · PIB ${next.periods.pib} · setores ${next.periods.va}`)
 }

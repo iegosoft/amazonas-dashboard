@@ -42,6 +42,7 @@ IBGE ──npm run data──▶ validação ──▶ branch `data` ──npm r
 - A branch [`data`](../../tree/data) guarda os dados publicados; cada commit nela é uma atualização.
 - Antes de `dev`/`build`, `npm run data:pull` baixa da branch `data`, valida de novo e grava em `public/data/`. Se o download falhar, mantém os dados locais; sem dados locais, o build falha (o site nunca é publicado vazio).
 - O navegador só lê `/data/municipios.json` e `/data/malha.json`; nunca chama o IBGE.
+- **Atualização automática:** toda segunda-feira o workflow [Atualização dos dados](.github/workflows/dados.yml) coleta e valida. Se os dados mudaram, publica na branch `data` e dispara o deploy; se algo falhar, nada é publicado e uma issue com label `dados` é aberta.
 
 ## Fontes de dados (IBGE)
 

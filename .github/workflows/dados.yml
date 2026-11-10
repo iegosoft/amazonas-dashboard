@@ -1,0 +1,121 @@
+name: Atualização dos dados
+
+# Toda segunda-feira coleta os dados do IBGE, valida e, se mudaram, publica na
+# branch `data` e dispara um novo deploy. Se algo falhar, nada é publicado e
+# uma issue com label `dados` é aberta (ou comentada) com o relatório.
+
+on:
+  schedule:
+    - cron: '0 12 * * 1' # segunda, 12:00 UTC (08:00 em Manaus)
+  workflow_dispatch:
+    inputs:
+      forcar_publicacao:
+        description: Publicar mesmo sem mudanças nos dados
+        type: boolean
+        default: false
+      simular_falha:
+        description: Simular uma falha para testar o alerta
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: atualizacao-dados
+  cancel-in-progress: false
+
+env:
+  ALERTA_TITULO: '⚠️ Falha na atualização automática dos dados'
+
+jobs:
+  atualizar:
+    name: Coletar, validar e publicar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar os dados publicados (branch data)
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          path: .data-branch
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Usar a última publicação como referência
+        run: |
+          mkdir -p public/data
+          cp .data-branch/municipios.json .data-branch/malha.json public/data/
+
+      - name: Simular falha
+        if: inputs.simular_falha
+        run: |
+          printf '## ❌ Falha simulada\n\nExecução manual para testar o alerta. Nada foi publicado.\n' > resumo.md
+          exit 1
+
+      - name: Coletar e validar
+        id: coleta
+        run: npx tsx scripts/fetch-data.ts --summary resumo.md ${{ inputs.forcar_publicacao && '--force' || '' }}
+
+      - name: Publicar na branch data
+        if: steps.coleta.outputs.changed == 'true'
+        working-directory: .data-branch
+        run: |
+          cp ../public/data/municipios.json ../public/data/malha.json .
+          periodos=$(node -p "const p=require('./municipios.json').periods; 'população ' + p.pop + ' · PIB ' + p.pib + ' · setores ' + p.va")
+          git config user.name 'IegoCosta'
+          git config user.email '181753209+iegosoft@users.noreply.github.com'
+          git add municipios.json malha.json
+          git commit -q -F - <<EOF
+          📊 data: atualiza dados do IBGE ($periodos)
+
+          $(cat ../resumo.md)
+          EOF
+          git push -q origin HEAD:data
+          echo "Publicado: $(git log -1 --format='%h %s')"
+
+      - name: Disparar deploy
+        if: steps.coleta.outputs.changed == 'true'
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::notice::Secret VERCEL_DEPLOY_HOOK não configurado: dados publicados na branch data, mas o deploy não foi disparado."
+          else
+            curl -fsS -X POST "$HOOK" > /dev/null && echo "Deploy disparado."
+          fi
+
+      - name: Resumo da execução
+        if: always()
+        run: '[ -f resumo.md ] && cat resumo.md >> "$GITHUB_STEP_SUMMARY" || true'
+
+      - name: Abrir alerta
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          { [ -f resumo.md ] && cat resumo.md || echo '## ❌ A atualização falhou antes da validação'; echo; echo "Execução: $RUN_URL"; } > alerta.md
+          aberta=$(gh issue list --label dados --state open --search "in:title \"$ALERTA_TITULO\"" --json number --jq '.[0].number // empty')
+          if [ -n "$aberta" ]; then
+            gh issue comment "$aberta" --body-file alerta.md
+          else
+            gh issue create --title "$ALERTA_TITULO" --label dados --body-file alerta.md
+          fi
+
+      - name: Fechar alerta anterior
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          aberta=$(gh issue list --label dados --state open --search "in:title \"$ALERTA_TITULO\"" --json number --jq '.[0].number // empty')
+          [ -z "$aberta" ] || gh issue close "$aberta" --comment "✅ A atualização voltou a funcionar: $RUN_URL"
