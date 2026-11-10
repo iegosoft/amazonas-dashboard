@@ -1,0 +1,15 @@
+# <emoji> <tipo>(<escopo>): <descrição no imperativo, até 72 caracteres>
+#
+# ✨ feat      funcionalidade nova         💄 style     visual / layout
+# 🐛 fix       correção de bug             ♻️ refactor  sem mudar comportamento
+# 🚑️ fix       hotfix em produção          ⚡️ perf      desempenho
+# 📝 docs      documentação                ✅ test      testes
+# 📦️ build     build / dependências        👷 ci        integração contínua
+# 🔧 chore     manutenção                  🔥 chore     remoção de código
+# 🔖 chore     versão (release)            ⏪️ revert    desfaz commit
+# 💥 <tipo>!   quebra compatibilidade (+ "BREAKING CHANGE:" no rodapé)
+#
+# Escopos: mapa, ranking, detalhe, kpis, ibge, indicadores, ui, tema, deps, readme, release
+#
+# Corpo (opcional): explique POR QUE a mudança foi feita.
+# Rodapé (opcional): BREAKING CHANGE: ... / Closes #123

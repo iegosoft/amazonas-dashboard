@@ -54,7 +54,7 @@ Site estático: `npm run build` e publique `dist/` na Vercel ou Netlify (framewo
 
 ## Contribuindo
 
-O projeto segue Git Flow (`main` em produção, `develop` para integração). Veja [CONTRIBUTING.md](CONTRIBUTING.md).
+O projeto segue Git Flow (`main` em produção, `develop` para integração) e Conventional Commits com emoji (`✨ feat(mapa): ...`). Veja [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licença
 
