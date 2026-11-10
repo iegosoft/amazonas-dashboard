@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { About } from './components/About'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Kpis } from './components/Kpis'
 import { Legend, MapView } from './components/MapView'
@@ -44,14 +45,22 @@ export default function App() {
             </p>
           )}
         </div>
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={dark ? 'Ativar tema claro' : 'Ativar tema escuro'}
-          className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
-        >
-          {dark ? '☀️ Claro' : '🌙 Escuro'}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <a
+            href="#sobre"
+            className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Sobre os dados
+          </a>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={dark ? 'Ativar tema claro' : 'Ativar tema escuro'}
+            className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+          >
+            {dark ? '☀️ Claro' : '🌙 Escuro'}
+          </button>
+        </div>
       </header>
 
       {state.status === 'loading' && <Skeleton />}
@@ -116,8 +125,15 @@ function Dashboard({ data }: { data: PublishedDataset }) {
     p.set('i', indicatorKey)
     p.set('m', selected.id)
     if (compare) p.set('c', compare.id)
-    window.history.replaceState(null, '', `?${p.toString()}`)
+    // Mantém o #âncora (ex.: #sobre-pibPerCapita) para links compartilhados continuarem funcionando.
+    window.history.replaceState(null, '', `?${p.toString()}${window.location.hash}`)
   }, [indicatorKey, selected.id, compare])
+
+  // O navegador tenta ir até o #âncora antes de os dados carregarem; refaz quando o painel aparece.
+  useEffect(() => {
+    const target = window.location.hash && document.getElementById(decodeURIComponent(window.location.hash.slice(1)))
+    if (target) target.scrollIntoView()
+  }, [])
 
   const top = ranking[0]
   const bottom = ranking[ranking.length - 1]
@@ -213,6 +229,10 @@ function Dashboard({ data }: { data: PublishedDataset }) {
           onSelect={setSelectedId}
           onHover={setHoveredId}
         />
+      </ErrorBoundary>
+
+      <ErrorBoundary label="a seção Sobre os dados">
+        <About periods={data.periods} fetchedAt={data.fetchedAt} />
       </ErrorBoundary>
     </main>
   )
