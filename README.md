@@ -51,3 +51,7 @@ src/
 ## Deploy
 
 Site estático: `npm run build` e publique `dist/` na Vercel ou Netlify (framework "Vite").
+
+## Licença
+
+[MIT](LICENSE). Os dados exibidos são do IBGE e seguem os termos de uso da fonte.
