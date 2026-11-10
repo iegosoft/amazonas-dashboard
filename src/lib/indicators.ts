@@ -1,5 +1,5 @@
 import { interpolateBlues, interpolateGnBu, interpolateOranges, interpolatePuRd, interpolateYlGn } from 'd3-scale-chromatic'
-import type { Municipio } from './types'
+import type { Municipio, Periods } from './types'
 import { fmtBRL, fmtBRLCompact, fmtDensity, fmtInt, fmtPct, fmtSignedPct } from './format'
 
 export type IndicatorKey =
@@ -13,6 +13,18 @@ export type IndicatorKey =
   | 'shareServ'
   | 'shareAdm'
 
+export interface Source {
+  label: string
+  url: string
+}
+
+/** Tabelas do IBGE de onde vêm os dados (SIDRA). */
+export const SOURCES = {
+  estimativas: { label: 'Estimativas de População (tabela 6579)', url: 'https://sidra.ibge.gov.br/tabela/6579' },
+  censo: { label: 'Censo Demográfico 2022 (tabela 4714)', url: 'https://sidra.ibge.gov.br/tabela/4714' },
+  pib: { label: 'PIB dos Municípios (tabela 5938)', url: 'https://sidra.ibge.gov.br/tabela/5938' },
+} satisfies Record<string, Source>
+
 export interface Indicator {
   key: IndicatorKey
   group: 'Pessoas' | 'Economia' | 'Perfil econômico'
@@ -21,7 +33,15 @@ export interface Indicator {
   get: (m: Municipio) => number | null
   format: (v: number) => string
   interpolator: (t: number) => string
+  sources: Source[]
+  /** Ano (ou intervalo) de referência do dado. */
+  period: (p: Periods) => string
+  /** Aviso quando o indicador combina dados de anos diferentes. */
+  note?: (p: Periods) => string | null
 }
+
+const vaNote = (p: Periods) =>
+  p.va !== p.pib ? `O IBGE ainda não divulgou a divisão por setor de ${p.pib}; usamos ${p.va}, o ano mais recente disponível.` : null
 
 export const INDICATORS: Indicator[] = [
   {
@@ -32,6 +52,8 @@ export const INDICATORS: Indicator[] = [
     get: (m) => m.popEst,
     format: fmtInt,
     interpolator: interpolateBlues,
+    sources: [SOURCES.estimativas],
+    period: (p) => p.pop,
   },
   {
     key: 'densidade',
@@ -41,6 +63,8 @@ export const INDICATORS: Indicator[] = [
     get: (m) => m.densidade,
     format: fmtDensity,
     interpolator: interpolateGnBu,
+    sources: [SOURCES.censo],
+    period: (p) => p.censo,
   },
   {
     key: 'crescimento',
@@ -50,6 +74,8 @@ export const INDICATORS: Indicator[] = [
     get: (m) => m.crescimento,
     format: fmtSignedPct,
     interpolator: interpolateYlGn,
+    sources: [SOURCES.censo, SOURCES.estimativas],
+    period: (p) => `${p.censo}–${p.pop}`,
   },
   {
     key: 'pib',
@@ -59,6 +85,8 @@ export const INDICATORS: Indicator[] = [
     get: (m) => (m.pib == null ? null : m.pib * 1000),
     format: fmtBRLCompact,
     interpolator: interpolateOranges,
+    sources: [SOURCES.pib],
+    period: (p) => p.pib,
   },
   {
     key: 'pibPerCapita',
@@ -68,6 +96,9 @@ export const INDICATORS: Indicator[] = [
     get: (m) => m.pibPerCapita,
     format: fmtBRL,
     interpolator: interpolatePuRd,
+    sources: [SOURCES.pib, SOURCES.censo],
+    period: (p) => p.pib,
+    note: (p) => (p.pib !== p.censo ? `Combina o PIB de ${p.pib} com a população do Censo ${p.censo}.` : null),
   },
   {
     key: 'shareAgro',
@@ -77,6 +108,9 @@ export const INDICATORS: Indicator[] = [
     get: (m) => m.shareAgro,
     format: fmtPct,
     interpolator: interpolateYlGn,
+    sources: [SOURCES.pib],
+    period: (p) => p.va,
+    note: vaNote,
   },
   {
     key: 'shareInd',
@@ -86,6 +120,9 @@ export const INDICATORS: Indicator[] = [
     get: (m) => m.shareInd,
     format: fmtPct,
     interpolator: interpolateOranges,
+    sources: [SOURCES.pib],
+    period: (p) => p.va,
+    note: vaNote,
   },
   {
     key: 'shareServ',
@@ -95,6 +132,9 @@ export const INDICATORS: Indicator[] = [
     get: (m) => m.shareServ,
     format: fmtPct,
     interpolator: interpolateBlues,
+    sources: [SOURCES.pib],
+    period: (p) => p.va,
+    note: vaNote,
   },
   {
     key: 'shareAdm',
@@ -104,6 +144,9 @@ export const INDICATORS: Indicator[] = [
     get: (m) => m.shareAdm,
     format: fmtPct,
     interpolator: interpolatePuRd,
+    sources: [SOURCES.pib],
+    period: (p) => p.va,
+    note: vaNote,
   },
 ]
 

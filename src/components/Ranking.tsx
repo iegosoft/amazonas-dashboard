@@ -4,6 +4,8 @@ import type { Ranked } from '../lib/stats'
 
 interface Props {
   indicator: Indicator
+  /** Ano de referência do indicador */
+  period: string
   ranking: Ranked[]
   selectedId: string
   hoveredId: string | null
@@ -13,7 +15,7 @@ interface Props {
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
-export function Ranking({ indicator, ranking, selectedId, hoveredId, onSelect, onHover }: Props) {
+export function Ranking({ indicator, period, ranking, selectedId, hoveredId, onSelect, onHover }: Props) {
   const [query, setQuery] = useState('')
   const [asc, setAsc] = useState(false)
   const deferred = useDeferredValue(query)
@@ -31,7 +33,7 @@ export function Ranking({ indicator, ranking, selectedId, hoveredId, onSelect, o
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">Ranking · {indicator.label}</h2>
+        <h2 className="text-sm font-semibold">Ranking · {indicator.label} <span className="font-normal text-slate-500 dark:text-slate-400">({period})</span></h2>
         <button
           type="button"
           onClick={() => setAsc((a) => !a)}

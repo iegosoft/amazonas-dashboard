@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dados gerados por `npm run data` (o versionamento deles é decidido nas issues #6 e #7)
+public/data/

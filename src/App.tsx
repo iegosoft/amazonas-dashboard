@@ -1,11 +1,14 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Kpis } from './components/Kpis'
 import { Legend, MapView } from './components/MapView'
 import { Ranking } from './components/Ranking'
+import { SourceNote } from './components/SourceNote'
 import { useDataset, useTheme } from './hooks'
-import { INDICATORS, INDICATOR_BY_KEY, isIndicatorKey, type IndicatorKey } from './lib/indicators'
+import { INDICATORS, INDICATOR_BY_KEY, isIndicatorKey, SOURCES, type IndicatorKey } from './lib/indicators'
 import { classify, rankBy } from './lib/stats'
-import type { Dataset } from './lib/types'
+import { fmtDate } from './lib/format'
+import type { PublishedDataset } from './lib/types'
 
 const Detail = lazy(() => import('./components/Detail').then((m) => ({ default: m.Detail })))
 
@@ -34,6 +37,12 @@ export default function App() {
           <p className="mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
             Explore população, economia e perfil produtivo dos 62 municípios do estado. Clique no mapa, compare cidades e veja onde cada uma se destaca.
           </p>
+          {state.status === 'ready' && (
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Dados do IBGE atualizados em {fmtDate(state.data.fetchedAt)}
+            </p>
+          )}
         </div>
         <button
           type="button"
@@ -48,23 +57,44 @@ export default function App() {
       {state.status === 'loading' && <Skeleton />}
       {state.status === 'error' && (
         <div role="alert" className="rounded-2xl border border-rose-300 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/40">
-          <h2 className="font-semibold text-rose-800 dark:text-rose-200">Não foi possível carregar os dados do IBGE</h2>
+          <h2 className="font-semibold text-rose-800 dark:text-rose-200">Não foi possível carregar os dados</h2>
           <p className="mt-1 text-sm text-rose-700 dark:text-rose-300">{state.message}</p>
           <button type="button" onClick={retry} className="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">
             Tentar de novo
           </button>
         </div>
       )}
-      {state.status === 'ready' && <Dashboard data={state.data} />}
+      {state.status === 'ready' && (
+        <ErrorBoundary label="o painel">
+          <Dashboard data={state.data} />
+        </ErrorBoundary>
+      )}
 
       <footer className="mt-10 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-        Fonte: IBGE — Estimativas de População, Censo Demográfico 2022, PIB dos Municípios e Malhas Territoriais, via API de dados agregados. PIB per capita = PIB ÷ população do Censo 2022.
+        <p>
+          Fonte: IBGE —{' '}
+          {Object.values(SOURCES).map((s, i) => (
+            <span key={s.url}>
+              {i > 0 && ', '}
+              <a href={s.url} target="_blank" rel="noreferrer" className="underline decoration-dotted underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200">
+                {s.label}
+              </a>
+            </span>
+          ))}{' '}
+          e Malhas Territoriais. Os dados são coletados e validados automaticamente toda semana.
+        </p>
+        {state.status === 'ready' && (
+          <p className="mt-1">
+            Anos de referência: população estimada {state.data.periods.pop} · Censo {state.data.periods.censo} · PIB{' '}
+            {state.data.periods.pib} · PIB por setor {state.data.periods.va}. Última atualização: {fmtDate(state.data.fetchedAt)}.
+          </p>
+        )}
       </footer>
     </div>
   )
 }
 
-function Dashboard({ data }: { data: Dataset }) {
+function Dashboard({ data }: { data: PublishedDataset }) {
   const [initial] = useState(readUrl)
   const [indicatorKey, setIndicatorKey] = useState<IndicatorKey>(initial.indicator)
   const [selectedId, setSelectedId] = useState(initial.selected)
@@ -129,23 +159,28 @@ function Dashboard({ data }: { data: Dataset }) {
           <div className="mb-2">
             <h2 className="text-lg font-bold">{indicator.label}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">{indicator.description}</p>
+            <div className="mt-1.5">
+              <SourceNote indicator={indicator} periods={data.periods} />
+            </div>
           </div>
-          <MapView
-            geo={data.geo}
-            byId={byId}
-            indicator={indicator}
-            classes={classes}
-            rankOf={rankOf}
-            total={ranking.length}
-            selectedId={selected.id}
-            compareId={compare?.id ?? null}
-            hoveredId={hoveredId}
-            onSelect={(id) => setSelectedId(id)}
-            onHover={setHoveredId}
-          />
-          <div className="mt-3">
-            <Legend indicator={indicator} classes={classes} />
-          </div>
+          <ErrorBoundary label="o mapa">
+            <MapView
+              geo={data.geo}
+              byId={byId}
+              indicator={indicator}
+              classes={classes}
+              rankOf={rankOf}
+              total={ranking.length}
+              selectedId={selected.id}
+              compareId={compare?.id ?? null}
+              hoveredId={hoveredId}
+              onSelect={(id) => setSelectedId(id)}
+              onHover={setHoveredId}
+            />
+            <div className="mt-3">
+              <Legend indicator={indicator} classes={classes} />
+            </div>
+          </ErrorBoundary>
           {top && bottom && (
             <p className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
               <strong>{top.m.nome}</strong> lidera com {indicator.format(top.value)}; <strong>{bottom.m.nome}</strong> fica na ponta oposta, com {indicator.format(bottom.value)}.
@@ -154,33 +189,38 @@ function Dashboard({ data }: { data: Dataset }) {
         </section>
 
         <div className="space-y-5 lg:col-span-5">
-          <Suspense fallback={<div className="h-[34rem] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />}>
-            <Detail
-              municipios={data.municipios}
-              selected={selected}
-              compare={compare}
-              periods={data.periods}
-              onCompareChange={setCompareId}
-            />
-          </Suspense>
+          <ErrorBoundary label="os detalhes do município">
+            <Suspense fallback={<div className="h-[34rem] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />}>
+              <Detail
+                municipios={data.municipios}
+                selected={selected}
+                compare={compare}
+                periods={data.periods}
+                onCompareChange={setCompareId}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </div>
 
-      <Ranking
-        indicator={indicator}
-        ranking={ranking}
-        selectedId={selected.id}
-        hoveredId={hoveredId}
-        onSelect={setSelectedId}
-        onHover={setHoveredId}
-      />
+      <ErrorBoundary label="o ranking">
+        <Ranking
+          indicator={indicator}
+          period={indicator.period(data.periods)}
+          ranking={ranking}
+          selectedId={selected.id}
+          hoveredId={hoveredId}
+          onSelect={setSelectedId}
+          onHover={setHoveredId}
+        />
+      </ErrorBoundary>
     </main>
   )
 }
 
 function Skeleton() {
   return (
-    <div className="animate-pulse space-y-5" aria-busy="true" aria-label="Carregando dados do IBGE">
+    <div className="animate-pulse space-y-5" aria-busy="true" aria-label="Carregando dados">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="h-24 rounded-xl bg-slate-200 dark:bg-slate-800" />
