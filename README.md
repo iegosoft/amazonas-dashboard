@@ -1,5 +1,7 @@
 # Amazonas em números
 
+[![CI](https://github.com/iegosoft/amazonas-dashboard/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/iegosoft/amazonas-dashboard/actions/workflows/ci.yml)
+
 Painel interativo de dados abertos dos **62 municípios do Amazonas**: população, densidade, crescimento, PIB, PIB per capita e perfil produtivo (agropecuária, indústria, serviços e setor público). Tudo vem **ao vivo da API do IBGE**, sem backend próprio.
 
 > Coloque aqui o link do deploy e um print/GIF do mapa.
