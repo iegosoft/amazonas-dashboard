@@ -1,0 +1,6 @@
+# Fim de linha LF em todos os sistemas (evita diffs falsos no Windows)
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
