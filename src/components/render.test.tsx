@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { INDICATORS, INDICATOR_BY_KEY } from '../lib/indicators'
 import { classify, rankBy } from '../lib/stats'
 import type { MunGeo, Municipio } from '../lib/types'
+import { About } from './About'
 import { Kpis } from './Kpis'
 import { Legend, MapView } from './MapView'
 import { Ranking } from './Ranking'
@@ -68,6 +69,19 @@ describe('renderização', () => {
       expect(html).toContain('2021')
       expect(html).toContain('href="https://sidra.ibge.gov.br/tabela/5938"')
       expect(html).toContain('ainda não divulgou a divisão por setor de 2023')
+    })
+
+    it('cada indicador do painel leva à sua explicação em "Sobre os dados"', () => {
+      const about = renderToString(<About periods={periods} fetchedAt="2026-11-10T18:00:00Z" />)
+      expect(about).toContain('10 de novembro de 2026')
+      for (const i of INDICATORS) {
+        const note = renderToString(<SourceNote indicator={i} periods={periods} />)
+        expect(note, i.key).toContain(`href="#sobre-${i.key}"`)
+        expect(about, i.key).toContain(`id="sobre-${i.key}"`)
+        expect(i.method.length, i.key).toBeGreaterThan(40)
+        for (const src of i.sources) expect(about, i.key).toContain(`href="${src.url}"`)
+      }
+      expect(about).toContain('/blob/main/LICENSE')
     })
 
     it('não mostra aviso quando os anos batem', () => {

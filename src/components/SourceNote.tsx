@@ -22,6 +22,10 @@ export function SourceNote({ indicator, periods }: { indicator: Indicator; perio
             </a>
           </span>
         ))}
+        {' · '}
+        <a href={`#sobre-${indicator.key}`} className="underline decoration-dotted underline-offset-2 hover:text-slate-800 dark:hover:text-slate-100">
+          Como é calculado
+        </a>
       </p>
       {note && (
         <p className="text-amber-700 dark:text-amber-400">
