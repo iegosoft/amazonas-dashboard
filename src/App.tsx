@@ -48,7 +48,7 @@ export default function App() {
       {state.status === 'loading' && <Skeleton />}
       {state.status === 'error' && (
         <div role="alert" className="rounded-2xl border border-rose-300 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/40">
-          <h2 className="font-semibold text-rose-800 dark:text-rose-200">Não foi possível carregar os dados do IBGE</h2>
+          <h2 className="font-semibold text-rose-800 dark:text-rose-200">Não foi possível carregar os dados</h2>
           <p className="mt-1 text-sm text-rose-700 dark:text-rose-300">{state.message}</p>
           <button type="button" onClick={retry} className="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">
             Tentar de novo
@@ -180,7 +180,7 @@ function Dashboard({ data }: { data: Dataset }) {
 
 function Skeleton() {
   return (
-    <div className="animate-pulse space-y-5" aria-busy="true" aria-label="Carregando dados do IBGE">
+    <div className="animate-pulse space-y-5" aria-busy="true" aria-label="Carregando dados">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="h-24 rounded-xl bg-slate-200 dark:bg-slate-800" />

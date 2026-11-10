@@ -143,37 +143,6 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   return (await res.json()) as T
 }
 
-export const CACHE_KEY = 'painel-am:v2'
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000
-
-function readCache(): Dataset | null {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-    const { at, data } = JSON.parse(raw) as { at: number; data: Dataset }
-    return Date.now() - at < CACHE_TTL_MS ? data : null
-  } catch {
-    return null
-  }
-}
-
-/** Apaga o cache dos dados para forçar uma nova busca no IBGE. */
-export function clearCache() {
-  try {
-    localStorage.removeItem(CACHE_KEY)
-  } catch {
-    /* storage bloqueado: não há o que limpar */
-  }
-}
-
-function writeCache(data: Dataset) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), data }))
-  } catch {
-    /* storage cheio ou bloqueado: segue sem cache */
-  }
-}
-
 /** Respostas do IBGE como chegaram, antes de qualquer interpretação. */
 export interface RawIbge {
   meta: LocalidadeMunicipio[]
@@ -202,13 +171,4 @@ export function assembleDataset(raw: RawIbge): Dataset {
     parseAgregado(raw.pib),
   )
   return { municipios, periods, geo: rewindForD3(raw.geo) }
-}
-
-export async function loadDataset(signal?: AbortSignal): Promise<Dataset> {
-  const cached = readCache()
-  if (cached) return cached
-
-  const data = assembleDataset(await fetchRaw(signal))
-  writeCache(data)
-  return data
 }
