@@ -36,6 +36,8 @@ export interface Indicator {
   sources: Source[]
   /** Ano (ou intervalo) de referência do dado. */
   period: (p: Periods) => string
+  /** Como o número é obtido, com tabelas e variáveis do IBGE (seção "Sobre os dados"). */
+  method: string
   /** Aviso quando o indicador combina dados de anos diferentes. */
   note?: (p: Periods) => string | null
 }
@@ -54,6 +56,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolateBlues,
     sources: [SOURCES.estimativas],
     period: (p) => p.pop,
+    method:
+      'Estimativa da população residente publicada anualmente pelo IBGE (tabela 6579, variável 9324). É uma projeção, revisada a cada novo Censo.',
   },
   {
     key: 'densidade',
@@ -65,6 +69,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolateGnBu,
     sources: [SOURCES.censo],
     period: (p) => p.censo,
+    method:
+      'Moradores por quilômetro quadrado no Censo Demográfico 2022 (tabela 4714, variável 614), como divulgado pelo IBGE.',
   },
   {
     key: 'crescimento',
@@ -76,6 +82,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolateYlGn,
     sources: [SOURCES.censo, SOURCES.estimativas],
     period: (p) => `${p.censo}–${p.pop}`,
+    method:
+      '(estimativa de população mais recente ÷ população do Censo 2022 − 1) × 100. Usa a tabela 6579 (variável 9324) e a tabela 4714 (variável 93).',
   },
   {
     key: 'pib',
@@ -87,6 +95,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolateOranges,
     sources: [SOURCES.pib],
     period: (p) => p.pib,
+    method:
+      'Produto Interno Bruto a preços correntes (tabela 5938, variável 37). O IBGE divulga em mil reais; o painel mostra em reais.',
   },
   {
     key: 'pibPerCapita',
@@ -98,6 +108,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolatePuRd,
     sources: [SOURCES.pib, SOURCES.censo],
     period: (p) => p.pib,
+    method:
+      'PIB a preços correntes (tabela 5938, variável 37) ÷ população do Censo 2022 (tabela 4714, variável 93). O PIB per capita oficial do IBGE usa a estimativa de população do mesmo ano do PIB, por isso os valores podem diferir um pouco.',
     note: (p) => (p.pib !== p.censo ? `Combina o PIB de ${p.pib} com a população do Censo ${p.censo}.` : null),
   },
   {
@@ -110,6 +122,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolateYlGn,
     sources: [SOURCES.pib],
     period: (p) => p.va,
+    method:
+      'Valor adicionado bruto da agropecuária (variável 513) dividido pela soma do valor adicionado dos quatro setores (variáveis 513, 517, 6575 e 525), em porcentagem. Os impostos sobre produtos não entram na conta.',
     note: vaNote,
   },
   {
@@ -122,6 +136,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolateOranges,
     sources: [SOURCES.pib],
     period: (p) => p.va,
+    method:
+      'Valor adicionado bruto da indústria (variável 517) dividido pela soma do valor adicionado dos quatro setores (variáveis 513, 517, 6575 e 525), em porcentagem. Os impostos sobre produtos não entram na conta.',
     note: vaNote,
   },
   {
@@ -134,6 +150,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolateBlues,
     sources: [SOURCES.pib],
     period: (p) => p.va,
+    method:
+      'Valor adicionado bruto dos serviços, exceto administração pública, (variável 6575) dividido pela soma do valor adicionado dos quatro setores (variáveis 513, 517, 6575 e 525), em porcentagem. Os impostos sobre produtos não entram na conta.',
     note: vaNote,
   },
   {
@@ -146,6 +164,8 @@ export const INDICATORS: Indicator[] = [
     interpolator: interpolatePuRd,
     sources: [SOURCES.pib],
     period: (p) => p.va,
+    method:
+      'Valor adicionado bruto da administração, defesa, educação e saúde públicas e seguridade social (variável 525) dividido pela soma do valor adicionado dos quatro setores (variáveis 513, 517, 6575 e 525), em porcentagem. Os impostos sobre produtos não entram na conta.',
     note: vaNote,
   },
 ]
