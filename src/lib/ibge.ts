@@ -137,9 +137,23 @@ export function rewindForD3(geo: MunGeo): MunGeo {
   }
 }
 
+/** "fetch failed" sozinho não diz nada: inclui a causa de rede (DNS, TLS, timeout...). */
+function networkReason(e: unknown): string {
+  const cause = e instanceof Error ? (e.cause as { code?: string; message?: string } | undefined) : undefined
+  const detail = cause?.code ?? cause?.message
+  const msg = e instanceof Error ? e.message : String(e)
+  return detail ? `${msg} (${detail})` : msg
+}
+
 async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(url, { signal })
-  if (!res.ok) throw new Error(`IBGE respondeu ${res.status} em ${new URL(url).pathname}`)
+  const { pathname } = new URL(url)
+  let res: Response
+  try {
+    res = await fetch(url, { signal })
+  } catch (e) {
+    throw new Error(`Sem resposta do IBGE em ${pathname}: ${networkReason(e)}`, { cause: e })
+  }
+  if (!res.ok) throw new Error(`IBGE respondeu ${res.status} em ${pathname}`)
   return (await res.json()) as T
 }
 
