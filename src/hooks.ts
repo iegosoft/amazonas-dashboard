@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { loadDataset } from './lib/ibge'
+import { clearCache, loadDataset } from './lib/ibge'
 import type { Dataset } from './lib/types'
 
 export type DataState =
@@ -23,11 +23,7 @@ export function useDataset(): [DataState, () => void] {
   }, [attempt])
 
   const retry = useCallback(() => {
-    try {
-      localStorage.removeItem('painel-am:v1')
-    } catch {
-      /* ignora */
-    }
+    clearCache()
     setState({ status: 'loading' })
     setAttempt((n) => n + 1)
   }, [])

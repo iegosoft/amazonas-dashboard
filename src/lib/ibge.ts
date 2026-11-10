@@ -143,7 +143,7 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   return (await res.json()) as T
 }
 
-const CACHE_KEY = 'painel-am:v2'
+export const CACHE_KEY = 'painel-am:v2'
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
 function readCache(): Dataset | null {
@@ -154,6 +154,15 @@ function readCache(): Dataset | null {
     return Date.now() - at < CACHE_TTL_MS ? data : null
   } catch {
     return null
+  }
+}
+
+/** Apaga o cache dos dados para forçar uma nova busca no IBGE. */
+export function clearCache() {
+  try {
+    localStorage.removeItem(CACHE_KEY)
+  } catch {
+    /* storage bloqueado: não há o que limpar */
   }
 }
 

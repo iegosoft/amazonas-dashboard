@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { buildMunicipios, parseAgregado, rewindForD3, toNumber } from './ibge'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { buildMunicipios, CACHE_KEY, clearCache, loadDataset, parseAgregado, rewindForD3, toNumber } from './ibge'
 import { classify, rankBy } from './stats'
 import { INDICATOR_BY_KEY } from './indicators'
 import type { AgregadoVariavel, LocalidadeMunicipio } from './types'
@@ -112,5 +112,29 @@ describe('classify', () => {
   it('remove limites repetidos quando há muitos valores iguais', () => {
     const c = classify([1, 1, 1, 1, 1, 1, 1, 1, 9], () => '#000', 6)
     expect(new Set(c.breaks).size).toBe(c.breaks.length)
+  })
+})
+
+describe('clearCache', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('apaga a mesma chave que o carregamento usa, forçando nova busca', async () => {
+    const store = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => store.set(k, v),
+      removeItem: (k: string) => store.delete(k),
+    })
+    const fetchMock = vi.fn(() => Promise.reject(new Error('sem rede')))
+    vi.stubGlobal('fetch', fetchMock)
+    const cached = { municipios: [], periods: { pop: '', censo: '', pib: '', va: '' }, geo: { type: 'FeatureCollection', features: [] } }
+    store.set(CACHE_KEY, JSON.stringify({ at: Date.now(), data: cached }))
+
+    await expect(loadDataset()).resolves.toEqual(cached)
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    clearCache()
+    await expect(loadDataset()).rejects.toThrow('sem rede')
+    expect(fetchMock).toHaveBeenCalled()
   })
 })
