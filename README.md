@@ -52,6 +52,10 @@ src/
 
 Site estático: `npm run build` e publique `dist/` na Vercel ou Netlify (framework "Vite").
 
+## Contribuindo
+
+O projeto segue Git Flow (`main` em produção, `develop` para integração). Veja [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Licença
 
 [MIT](LICENSE). Os dados exibidos são do IBGE e seguem os termos de uso da fonte.
