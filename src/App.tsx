@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Kpis } from './components/Kpis'
 import { Legend, MapView } from './components/MapView'
 import { Ranking } from './components/Ranking'
@@ -63,7 +64,11 @@ export default function App() {
           </button>
         </div>
       )}
-      {state.status === 'ready' && <Dashboard data={state.data} />}
+      {state.status === 'ready' && (
+        <ErrorBoundary label="o painel">
+          <Dashboard data={state.data} />
+        </ErrorBoundary>
+      )}
 
       <footer className="mt-10 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
         <p>
@@ -158,22 +163,24 @@ function Dashboard({ data }: { data: PublishedDataset }) {
               <SourceNote indicator={indicator} periods={data.periods} />
             </div>
           </div>
-          <MapView
-            geo={data.geo}
-            byId={byId}
-            indicator={indicator}
-            classes={classes}
-            rankOf={rankOf}
-            total={ranking.length}
-            selectedId={selected.id}
-            compareId={compare?.id ?? null}
-            hoveredId={hoveredId}
-            onSelect={(id) => setSelectedId(id)}
-            onHover={setHoveredId}
-          />
-          <div className="mt-3">
-            <Legend indicator={indicator} classes={classes} />
-          </div>
+          <ErrorBoundary label="o mapa">
+            <MapView
+              geo={data.geo}
+              byId={byId}
+              indicator={indicator}
+              classes={classes}
+              rankOf={rankOf}
+              total={ranking.length}
+              selectedId={selected.id}
+              compareId={compare?.id ?? null}
+              hoveredId={hoveredId}
+              onSelect={(id) => setSelectedId(id)}
+              onHover={setHoveredId}
+            />
+            <div className="mt-3">
+              <Legend indicator={indicator} classes={classes} />
+            </div>
+          </ErrorBoundary>
           {top && bottom && (
             <p className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
               <strong>{top.m.nome}</strong> lidera com {indicator.format(top.value)}; <strong>{bottom.m.nome}</strong> fica na ponta oposta, com {indicator.format(bottom.value)}.
@@ -182,27 +189,31 @@ function Dashboard({ data }: { data: PublishedDataset }) {
         </section>
 
         <div className="space-y-5 lg:col-span-5">
-          <Suspense fallback={<div className="h-[34rem] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />}>
-            <Detail
-              municipios={data.municipios}
-              selected={selected}
-              compare={compare}
-              periods={data.periods}
-              onCompareChange={setCompareId}
-            />
-          </Suspense>
+          <ErrorBoundary label="os detalhes do município">
+            <Suspense fallback={<div className="h-[34rem] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />}>
+              <Detail
+                municipios={data.municipios}
+                selected={selected}
+                compare={compare}
+                periods={data.periods}
+                onCompareChange={setCompareId}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </div>
 
-      <Ranking
-        indicator={indicator}
-        period={indicator.period(data.periods)}
-        ranking={ranking}
-        selectedId={selected.id}
-        hoveredId={hoveredId}
-        onSelect={setSelectedId}
-        onHover={setHoveredId}
-      />
+      <ErrorBoundary label="o ranking">
+        <Ranking
+          indicator={indicator}
+          period={indicator.period(data.periods)}
+          ranking={ranking}
+          selectedId={selected.id}
+          hoveredId={hoveredId}
+          onSelect={setSelectedId}
+          onHover={setHoveredId}
+        />
+      </ErrorBoundary>
     </main>
   )
 }
