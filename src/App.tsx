@@ -4,10 +4,12 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { Kpis } from './components/Kpis'
 import { Legend, MapView } from './components/MapView'
 import { Ranking } from './components/Ranking'
+import { ShareButton } from './components/ShareButton'
 import { SourceNote } from './components/SourceNote'
 import { useDataset, useTheme } from './hooks'
 import { INDICATORS, INDICATOR_BY_KEY, isIndicatorKey, SOURCES, type IndicatorKey } from './lib/indicators'
 import { classify, rankBy } from './lib/stats'
+import { downloadText, municipiosCsv, rankingCsv } from './lib/csv'
 import { fmtDate } from './lib/format'
 import type { PublishedDataset } from './lib/types'
 
@@ -31,7 +33,7 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-10 pt-5 sm:px-6">
-      <header className="mb-5 flex items-start justify-between gap-4">
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Painel de dados abertos</p>
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-4xl">Amazonas em números</h1>
@@ -45,13 +47,14 @@ export default function App() {
             </p>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <a
             href="#sobre"
             className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Sobre os dados
           </a>
+          <ShareButton />
           <button
             type="button"
             onClick={toggleTheme}
@@ -228,11 +231,23 @@ function Dashboard({ data }: { data: PublishedDataset }) {
           hoveredId={hoveredId}
           onSelect={setSelectedId}
           onHover={setHoveredId}
+          onDownload={() =>
+            downloadText(
+              `amazonas-ranking-${indicator.key}-${indicator.period(data.periods)}.csv`,
+              rankingCsv(indicator, ranking, data.periods, data.fetchedAt),
+            )
+          }
         />
       </ErrorBoundary>
 
       <ErrorBoundary label="a seção Sobre os dados">
-        <About periods={data.periods} fetchedAt={data.fetchedAt} />
+        <About
+          periods={data.periods}
+          fetchedAt={data.fetchedAt}
+          onDownloadAll={() =>
+            downloadText('amazonas-municipios.csv', municipiosCsv(data.municipios, data.periods, data.fetchedAt))
+          }
+        />
       </ErrorBoundary>
     </main>
   )
