@@ -50,7 +50,7 @@ export function Detail({ municipios, selected, compare, periods, onCompareChange
           <select
             value={compare?.id ?? ''}
             onChange={(e) => onCompareChange(e.target.value || null)}
-            className="w-44 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="w-56 max-w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           >
             <option value="">Mediana dos {municipios.length} municípios</option>
             {municipios
@@ -81,7 +81,9 @@ export function Detail({ municipios, selected, compare, periods, onCompareChange
               const rank = rankBy(municipios, ind).find((r) => r.m.id === selected.id)?.rank
               return (
                 <tr key={ind.key} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
-                  <td className="py-1.5 pr-2 text-slate-600 dark:text-slate-300">{ind.label}</td>
+                  <td className="py-1.5 pr-2 text-slate-600 dark:text-slate-300">
+                    {ind.label} <span className="text-xs text-slate-400 dark:text-slate-500">{ind.period(periods)}</span>
+                  </td>
                   <td className="py-1.5 pr-2 text-right font-semibold tabular-nums">{v == null ? '—' : ind.format(v)}</td>
                   <td className="py-1.5 pr-2 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {other == null ? '—' : ind.format(other)}

@@ -1,11 +1,12 @@
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { INDICATOR_BY_KEY } from '../lib/indicators'
+import { INDICATORS, INDICATOR_BY_KEY } from '../lib/indicators'
 import { classify, rankBy } from '../lib/stats'
 import type { MunGeo, Municipio } from '../lib/types'
 import { Kpis } from './Kpis'
 import { Legend, MapView } from './MapView'
 import { Ranking } from './Ranking'
+import { SourceNote } from './SourceNote'
 
 const sq = (x: number, y: number) => ({
   type: 'Polygon' as const,
@@ -44,9 +45,34 @@ describe('renderização', () => {
 
   it('legenda, ranking e KPIs renderizam', () => {
     expect(renderToString(<Legend indicator={ind} classes={classes} />)).toContain('sem dados')
-    const r = renderToString(<Ranking indicator={ind} ranking={ranking} selectedId="1" hoveredId={null} onSelect={() => {}} onHover={() => {}} />)
+    const r = renderToString(<Ranking indicator={ind} period="2026" ranking={ranking} selectedId="1" hoveredId={null} onSelect={() => {}} onHover={() => {}} />)
     expect(r).toContain('Alfa')
     expect(r).not.toContain('Gama')
+    expect(r).toContain('(<!-- -->2026<!-- -->)')
     expect(renderToString(<Kpis municipios={municipios} periods={{ pop: '2026', censo: '2022', pib: '2023', va: '2021' }} />)).toContain('Peso de Alfa')
+  })
+
+  describe('fonte e ano de referência', () => {
+    const periods = { pop: '2026', censo: '2022', pib: '2023', va: '2021' }
+
+    it('todo indicador tem ano e pelo menos uma fonte com link', () => {
+      for (const i of INDICATORS) {
+        expect(i.period(periods), i.key).toMatch(/^\d{4}(–\d{4})?$/)
+        expect(i.sources.length, i.key).toBeGreaterThan(0)
+        expect(i.sources.every((s) => s.url.startsWith('https://sidra.ibge.gov.br/')), i.key).toBe(true)
+      }
+    })
+
+    it('mostra ano, link da fonte e avisa quando mistura anos', () => {
+      const html = renderToString(<SourceNote indicator={INDICATOR_BY_KEY.shareInd} periods={periods} />)
+      expect(html).toContain('2021')
+      expect(html).toContain('href="https://sidra.ibge.gov.br/tabela/5938"')
+      expect(html).toContain('ainda não divulgou a divisão por setor de 2023')
+    })
+
+    it('não mostra aviso quando os anos batem', () => {
+      const html = renderToString(<SourceNote indicator={INDICATOR_BY_KEY.shareInd} periods={{ ...periods, va: '2023' }} />)
+      expect(html).not.toContain('Atenção')
+    })
   })
 })

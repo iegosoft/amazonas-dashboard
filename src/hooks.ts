@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { loadDataset } from './lib/data'
-import type { Dataset } from './lib/types'
+import type { PublishedDataset } from './lib/types'
 
 export type DataState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; data: Dataset }
+  | { status: 'ready'; data: PublishedDataset }
 
 export function useDataset(): [DataState, () => void] {
   const [state, setState] = useState<DataState>({ status: 'loading' })
