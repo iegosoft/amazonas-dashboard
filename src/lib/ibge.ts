@@ -137,9 +137,36 @@ export function rewindForD3(geo: MunGeo): MunGeo {
   }
 }
 
-async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(url, { signal })
-  if (!res.ok) throw new Error(`IBGE respondeu ${res.status} em ${new URL(url).pathname}`)
+/** "fetch failed" sozinho não diz nada: inclui a causa de rede (DNS, TLS, timeout...). */
+function networkReason(e: unknown): string {
+  const cause = e instanceof Error ? (e.cause as { code?: string; message?: string } | undefined) : undefined
+  const detail = cause?.code ?? cause?.message
+  const msg = e instanceof Error ? e.message : String(e)
+  return detail ? `${msg} (${detail})` : msg
+}
+
+/**
+ * Intermediário com IP brasileiro (api/ibge.ts na Vercel, região São Paulo).
+ * O IBGE recusa conexões de fora do Brasil, como os servidores do GitHub Actions.
+ */
+export interface IbgeProxy {
+  url: string
+  token: string
+}
+
+async function getJson<T>(url: string, signal?: AbortSignal, proxy?: IbgeProxy): Promise<T> {
+  const { pathname } = new URL(url)
+  const via = proxy ? ' (via proxy)' : ''
+  let res: Response
+  try {
+    res = proxy
+      ? await fetch(`${proxy.url}?url=${encodeURIComponent(url)}`, { signal, headers: { authorization: `Bearer ${proxy.token}` } })
+      : await fetch(url, { signal })
+  } catch (e) {
+    throw new Error(`Sem resposta do IBGE em ${pathname}${via}: ${networkReason(e)}`, { cause: e })
+  }
+  if (proxy && res.status === 401) throw new Error('O proxy recusou o token (401): confira IBGE_PROXY_TOKEN e COLETA_TOKEN')
+  if (!res.ok) throw new Error(`IBGE respondeu ${res.status} em ${pathname}${via}`)
   return (await res.json()) as T
 }
 
@@ -152,13 +179,13 @@ export interface RawIbge {
   geo: MunGeo
 }
 
-export async function fetchRaw(signal?: AbortSignal): Promise<RawIbge> {
+export async function fetchRaw(signal?: AbortSignal, proxy?: IbgeProxy): Promise<RawIbge> {
   const [meta, pop, censo, pib, geo] = await Promise.all([
-    getJson<LocalidadeMunicipio[]>(ENDPOINTS.municipios, signal),
-    getJson<AgregadoVariavel[]>(ENDPOINTS.pop, signal),
-    getJson<AgregadoVariavel[]>(ENDPOINTS.censo, signal),
-    getJson<AgregadoVariavel[]>(ENDPOINTS.pib, signal),
-    getJson<MunGeo>(ENDPOINTS.malha, signal),
+    getJson<LocalidadeMunicipio[]>(ENDPOINTS.municipios, signal, proxy),
+    getJson<AgregadoVariavel[]>(ENDPOINTS.pop, signal, proxy),
+    getJson<AgregadoVariavel[]>(ENDPOINTS.censo, signal, proxy),
+    getJson<AgregadoVariavel[]>(ENDPOINTS.pib, signal, proxy),
+    getJson<MunGeo>(ENDPOINTS.malha, signal, proxy),
   ])
   return { meta, pop, censo, pib, geo }
 }
