@@ -14,8 +14,31 @@ import { DATA_FILES } from '../src/lib/data'
 import type { DataFile, MunGeo } from '../src/lib/types'
 import { validateDataset } from '../src/lib/validate'
 
-const BASE = process.env.DATA_URL ?? 'https://raw.githubusercontent.com/iegosoft/amazonas-dashboard/data/'
+const REPO = 'iegosoft/amazonas-dashboard'
 const out = (file: string) => path.resolve('public', file)
+
+/**
+ * O raw.githubusercontent.com guarda a branch em cache por 5 minutos: um deploy disparado
+ * logo após a publicação recebia os dados antigos. Por isso os arquivos são baixados pelo
+ * commit exato da ponta da branch `data`, que nunca fica desatualizado.
+ */
+async function resolveBase(): Promise<string> {
+  if (process.env.DATA_URL) return process.env.DATA_URL
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/commits/data`, {
+      headers: { accept: 'application/vnd.github.sha' },
+      signal: AbortSignal.timeout(10_000),
+    })
+    const sha = res.ok ? (await res.text()).trim() : ''
+    if (/^[0-9a-f]{40}$/.test(sha)) return `https://raw.githubusercontent.com/${REPO}/${sha}/`
+    console.warn(`⚠️  Não foi possível descobrir o último commit da branch data (HTTP ${res.status}); usando a branch, que pode estar em cache por até 5 min.`)
+  } catch (e) {
+    console.warn(`⚠️  Não foi possível descobrir o último commit da branch data (${e instanceof Error ? e.message : e}); usando a branch, que pode estar em cache por até 5 min.`)
+  }
+  return `https://raw.githubusercontent.com/${REPO}/data/`
+}
+
+const BASE = await resolveBase()
 
 async function download<T>(file: string): Promise<{ text: string; json: T }> {
   const url = `${BASE}${path.basename(file)}`
@@ -37,7 +60,7 @@ try {
   await writeFile(out(DATA_FILES.data), data.text)
   await writeFile(out(DATA_FILES.geo), geo.text)
   const p = data.json.periods
-  console.log(`✅ Dados de ${data.json.fetchedAt.slice(0, 10)} (população ${p.pop} · Censo ${p.censo} · PIB ${p.pib} · setores ${p.va})`)
+  console.log(`✅ Dados de ${data.json.fetchedAt.slice(0, 16).replace('T', ' ')} UTC, de ${BASE.split('/')[5]?.slice(0, 7)} (população ${p.pop} · Censo ${p.censo} · PIB ${p.pib} · setores ${p.va})`)
 } catch (e) {
   const msg = e instanceof Error ? e.message : String(e)
   if ((await exists(out(DATA_FILES.data))) && (await exists(out(DATA_FILES.geo)))) {

@@ -2,6 +2,11 @@
 
 Mudanças relevantes de cada versão. Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.2.1] - 2026-11-10
+
+### Corrigido
+- Deploy disparado logo após uma atualização de dados publicava os dados antigos, por causa do cache de 5 minutos do raw.githubusercontent.com. O build agora baixa os dados pelo commit exato da branch `data`.
+
 ## [0.2.0] - 2026-11-10
 
 Base confiável: dados validados antes de publicar, atualizados automaticamente e site que não depende do IBGE no ar.
@@ -27,4 +32,5 @@ Base confiável: dados validados antes de publicar, atualizados automaticamente 
 ### Removido
 - Arquivos que sobraram do template do Vite. (#3)
 
+[0.2.1]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.2.1
 [0.2.0]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.2.0
