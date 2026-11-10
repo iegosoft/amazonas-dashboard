@@ -1,5 +1,6 @@
 import { geoMercator, geoPath } from 'd3-geo'
 import { useMemo, useRef, useState } from 'react'
+import { fmtRegiao } from '../lib/format'
 import type { Indicator } from '../lib/indicators'
 import type { Classes } from '../lib/stats'
 import { NO_DATA_COLOR } from '../lib/stats'
@@ -123,7 +124,7 @@ export function MapView({
           }}
         >
           <div className="font-semibold">{hovered.nome}</div>
-          <div className="text-slate-500 dark:text-slate-400">{hovered.microrregiao}</div>
+          <div className="text-slate-500 dark:text-slate-400">{fmtRegiao(hovered)}</div>
           <div className="mt-1.5 flex items-baseline justify-between gap-2">
             <span className="text-base font-bold tabular-nums">
               {hoveredValue == null ? 'Sem dados' : indicator.format(hoveredValue)}

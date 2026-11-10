@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { fmtPct } from '../lib/format'
+import { fmtPct, fmtRegiao } from '../lib/format'
 import { INDICATORS, SECTORS, SECTOR_COLORS } from '../lib/indicators'
 import { median, rankBy, sum } from '../lib/stats'
 import type { Municipio, Periods } from '../lib/types'
@@ -28,11 +28,11 @@ function stateShares(municipios: Municipio[]) {
 
 export function Detail({ municipios, selected, compare, periods, onCompareChange }: Props) {
   const state = stateShares(municipios)
-  const compareLabel = compare ? compare.nome : 'Mediana do AM'
+  const compareLabel = compare ? compare.nome : 'Mediana dos municípios'
 
   const chartData = [
     { name: selected.nome, ...pickShares(selected) },
-    compare ? { name: compare.nome, ...pickShares(compare) } : { name: 'Amazonas (total)', ...state },
+    compare ? { name: compare.nome, ...pickShares(compare) } : { name: 'Estado inteiro', ...state },
   ]
 
   return (
@@ -42,7 +42,7 @@ export function Detail({ municipios, selected, compare, periods, onCompareChange
           <p className="text-xs font-medium uppercase tracking-wide text-rose-600 dark:text-rose-400">Município selecionado</p>
           <h2 className="text-2xl font-bold leading-tight">{selected.nome}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {selected.microrregiao} · {selected.mesorregiao}
+            {fmtRegiao(selected)}
           </p>
         </div>
         <label className="text-xs text-slate-500 dark:text-slate-400">
@@ -52,7 +52,7 @@ export function Detail({ municipios, selected, compare, periods, onCompareChange
             onChange={(e) => onCompareChange(e.target.value || null)}
             className="w-44 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           >
-            <option value="">Mediana do Amazonas</option>
+            <option value="">Mediana dos {municipios.length} municípios</option>
             {municipios
               .filter((m) => m.id !== selected.id)
               .map((m) => (
@@ -120,6 +120,12 @@ export function Detail({ municipios, selected, compare, periods, onCompareChange
           </li>
         ))}
       </ul>
+      {!compare && (
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          Sem município de comparação, a tabela mostra a mediana dos municípios (o município típico) e o gráfico mostra a
+          composição da economia do estado inteiro.
+        </p>
+      )}
     </section>
   )
 }

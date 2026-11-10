@@ -1,3 +1,5 @@
+import type { Municipio } from './types'
+
 const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 })
 const nf1 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 })
 const nf2 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 })
@@ -22,3 +24,12 @@ export function fmtBRLCompact(reais: number): string {
 
 export const fmtCompact = (v: number) =>
   new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(v)
+
+/** "Microrregião: Manaus · Mesorregião: Centro Amazonense", omitindo o que o IBGE não informou. */
+export const fmtRegiao = (m: Pick<Municipio, 'microrregiao' | 'mesorregiao'>) =>
+  [
+    m.microrregiao !== '—' && `Microrregião: ${m.microrregiao}`,
+    m.mesorregiao !== '—' && `Mesorregião: ${m.mesorregiao}`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
