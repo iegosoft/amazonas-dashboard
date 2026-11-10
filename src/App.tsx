@@ -1,12 +1,15 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { About } from './components/About'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Kpis } from './components/Kpis'
 import { Legend, MapView } from './components/MapView'
 import { Ranking } from './components/Ranking'
+import { ShareButton } from './components/ShareButton'
 import { SourceNote } from './components/SourceNote'
 import { useDataset, useTheme } from './hooks'
 import { INDICATORS, INDICATOR_BY_KEY, isIndicatorKey, SOURCES, type IndicatorKey } from './lib/indicators'
 import { classify, rankBy } from './lib/stats'
+import { downloadText, municipiosCsv, rankingCsv } from './lib/csv'
 import { fmtDate } from './lib/format'
 import type { PublishedDataset } from './lib/types'
 
@@ -30,7 +33,7 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-10 pt-5 sm:px-6">
-      <header className="mb-5 flex items-start justify-between gap-4">
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Painel de dados abertos</p>
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-4xl">Amazonas em números</h1>
@@ -44,14 +47,23 @@ export default function App() {
             </p>
           )}
         </div>
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={dark ? 'Ativar tema claro' : 'Ativar tema escuro'}
-          className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
-        >
-          {dark ? '☀️ Claro' : '🌙 Escuro'}
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <a
+            href="#sobre"
+            className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Sobre os dados
+          </a>
+          <ShareButton />
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={dark ? 'Ativar tema claro' : 'Ativar tema escuro'}
+            className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+          >
+            {dark ? '☀️ Claro' : '🌙 Escuro'}
+          </button>
+        </div>
       </header>
 
       {state.status === 'loading' && <Skeleton />}
@@ -116,8 +128,15 @@ function Dashboard({ data }: { data: PublishedDataset }) {
     p.set('i', indicatorKey)
     p.set('m', selected.id)
     if (compare) p.set('c', compare.id)
-    window.history.replaceState(null, '', `?${p.toString()}`)
+    // Mantém o #âncora (ex.: #sobre-pibPerCapita) para links compartilhados continuarem funcionando.
+    window.history.replaceState(null, '', `?${p.toString()}${window.location.hash}`)
   }, [indicatorKey, selected.id, compare])
+
+  // O navegador tenta ir até o #âncora antes de os dados carregarem; refaz quando o painel aparece.
+  useEffect(() => {
+    const target = window.location.hash && document.getElementById(decodeURIComponent(window.location.hash.slice(1)))
+    if (target) target.scrollIntoView()
+  }, [])
 
   const top = ranking[0]
   const bottom = ranking[ranking.length - 1]
@@ -212,6 +231,22 @@ function Dashboard({ data }: { data: PublishedDataset }) {
           hoveredId={hoveredId}
           onSelect={setSelectedId}
           onHover={setHoveredId}
+          onDownload={() =>
+            downloadText(
+              `amazonas-ranking-${indicator.key}-${indicator.period(data.periods)}.csv`,
+              rankingCsv(indicator, ranking, data.periods, data.fetchedAt),
+            )
+          }
+        />
+      </ErrorBoundary>
+
+      <ErrorBoundary label="a seção Sobre os dados">
+        <About
+          periods={data.periods}
+          fetchedAt={data.fetchedAt}
+          onDownloadAll={() =>
+            downloadText('amazonas-municipios.csv', municipiosCsv(data.municipios, data.periods, data.fetchedAt))
+          }
         />
       </ErrorBoundary>
     </main>

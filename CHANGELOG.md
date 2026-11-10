@@ -2,6 +2,18 @@
 
 Mudanças relevantes de cada versão. Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.3.0] - 2026-11-10
+
+Transparência: de onde vem e como é calculado cada número, e os dados nas mãos de quem usa o painel.
+
+### Adicionado
+- Seção "Sobre os dados": fórmula de cada indicador com tabelas e variáveis do IBGE, ano de referência, fontes com link, como os dados chegam ao site, quando cada dado muda, limitações e licenças. Cada indicador do painel tem um link "Como é calculado" para o trecho correspondente. (#10)
+- Download em CSV do ranking atual e da tabela completa dos 62 municípios, no formato do Excel em português. (#11)
+- Botão "Compartilhar": menu nativo no celular, cópia do link no computador. (#11)
+
+### Corrigido
+- Links com âncora (ex.: `#sobre-pibPerCapita`) abriam no topo da página.
+
 ## [0.2.1] - 2026-11-10
 
 ### Corrigido
@@ -32,5 +44,6 @@ Base confiável: dados validados antes de publicar, atualizados automaticamente 
 ### Removido
 - Arquivos que sobraram do template do Vite. (#3)
 
+[0.3.0]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.3.0
 [0.2.1]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.2.1
 [0.2.0]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.2.0
