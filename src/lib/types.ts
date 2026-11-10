@@ -61,6 +61,11 @@ export interface LocalidadeMunicipio {
   'regiao-imediata'?: { nome: string } | null
 }
 
+/** Dataset como o site recebe: inclui quando os dados publicados mudaram pela última vez. */
+export interface PublishedDataset extends Dataset {
+  fetchedAt: string
+}
+
 /** Arquivo public/data/municipios.json gerado por `npm run data`. A malha fica em malha.json. */
 export interface DataFile {
   schemaVersion: 1

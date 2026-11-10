@@ -10,6 +10,10 @@ export const fmtPct = (v: number) => `${nf1.format(v)}%`
 export const fmtSignedPct = (v: number) => `${v > 0 ? '+' : ''}${nf1.format(v)}%`
 export const fmtDensity = (v: number) => `${v < 10 ? nf2.format(v) : nf1.format(v)} hab/km²`
 
+/** "10 de novembro de 2026", no fuso de Manaus. */
+export const fmtDate = (iso: string) =>
+  new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeZone: 'America/Manaus' }).format(new Date(iso))
+
 export const fmtBRL = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
 

@@ -17,7 +17,7 @@ export function Kpis({ municipios, periods }: { municipios: Municipio[]; periods
     {
       label: `Peso de ${biggestPib?.nome ?? '—'}`,
       value: `${fmtPct(shareCap)} do PIB`,
-      hint: `e ${fmtPct(shareCapPop)} da população`,
+      hint: `PIB de ${periods.pib} · ${fmtPct(shareCapPop)} da população em ${periods.pop}`,
       color: 'border-t-fuchsia-600',
     },
   ]

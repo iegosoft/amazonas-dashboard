@@ -20,7 +20,7 @@ describe('loadDataset', () => {
 
   it('lê os dois arquivos publicados com o site, sem chamar o IBGE', async () => {
     const fetchMock = serve({ [DATA_FILES.data]: file, [DATA_FILES.geo]: geo })
-    await expect(loadDataset(undefined, '/base/')).resolves.toEqual({ municipios: [], periods: file.periods, geo })
+    await expect(loadDataset(undefined, '/base/')).resolves.toEqual({ municipios: [], periods: file.periods, fetchedAt: file.fetchedAt, geo })
     expect(fetchMock.mock.calls.map(([u]) => u)).toEqual([`/base/${DATA_FILES.data}`, `/base/${DATA_FILES.geo}`])
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes('ibge.gov.br'))).toBe(false)
   })
