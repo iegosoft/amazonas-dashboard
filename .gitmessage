@@ -7,9 +7,10 @@
 # 📦️ build     build / dependências        👷 ci        integração contínua
 # 🔧 chore     manutenção                  🔥 chore     remoção de código
 # 🔖 chore     versão (release)            ⏪️ revert    desfaz commit
+# 📊 data      dados publicados (só na branch data)
 # 💥 <tipo>!   quebra compatibilidade (+ "BREAKING CHANGE:" no rodapé)
 #
-# Escopos: mapa, ranking, detalhe, kpis, ibge, indicadores, ui, tema, deps, readme, release
+# Escopos: mapa, ranking, detalhe, kpis, ibge, dados, indicadores, ui, tema, deps, readme, release
 #
 # Corpo (opcional): explique POR QUE a mudança foi feita.
 # Rodapé (opcional): BREAKING CHANGE: ... / Closes #123

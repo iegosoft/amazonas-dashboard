@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/iegosoft/amazonas-dashboard/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/iegosoft/amazonas-dashboard/actions/workflows/ci.yml)
 
-Painel interativo de dados abertos dos **62 municípios do Amazonas**: população, densidade, crescimento, PIB, PIB per capita e perfil produtivo (agropecuária, indústria, serviços e setor público). Tudo vem **ao vivo da API do IBGE**, sem backend próprio.
+Painel interativo de dados abertos dos **62 municípios do Amazonas**: população, densidade, crescimento, PIB, PIB per capita e perfil produtivo (agropecuária, indústria, serviços e setor público). Os dados vêm da **API do IBGE**, são **validados antes de publicar** e servidos pelo próprio site, sem backend: se a API do IBGE cair, o painel continua no ar.
 
 > Coloque aqui o link do deploy e um print/GIF do mapa.
 
@@ -14,7 +14,7 @@ Painel interativo de dados abertos dos **62 municípios do Amazonas**: populaç�
 - **Comparação** entre dois municípios ou contra a mediana do estado, com gráfico de composição setorial.
 - **Estado compartilhável na URL** (`?i=pibPerCapita&m=1301902&c=1302603`).
 - **Tema claro/escuro**, navegação por teclado no mapa, `aria-label` em cada município, `prefers-reduced-motion`.
-- **Cache de 24 h** no `localStorage`, estados de carregamento e de erro com "tentar de novo".
+- **Dados validados e servidos pelo próprio site**, com estados de carregamento e de erro com "tentar de novo".
 
 ## Stack
 
@@ -27,8 +27,21 @@ npm install
 npm run dev      # desenvolvimento
 npm test         # testes (parser do IBGE, validação, derivados, renderização)
 npm run build    # produção
-npm run data     # coleta e valida os dados do IBGE em public/data/
+npm run data     # coleta e valida os dados direto do IBGE em public/data/
 ```
+
+`npm run dev` e `npm run build` baixam antes os dados publicados (`npm run data:pull`). Sem internet, usam o que já estiver em `public/data/`.
+
+## Como os dados chegam ao site
+
+```
+IBGE ──npm run data──▶ validação ──▶ branch `data` ──npm run data:pull──▶ public/data/ ──▶ site
+```
+
+- `npm run data` coleta e valida; só grava se tudo passar.
+- A branch [`data`](../../tree/data) guarda os dados publicados; cada commit nela é uma atualização.
+- Antes de `dev`/`build`, `npm run data:pull` baixa da branch `data`, valida de novo e grava em `public/data/`. Se o download falhar, mantém os dados locais; sem dados locais, o build falha (o site nunca é publicado vazio).
+- O navegador só lê `/data/municipios.json` e `/data/malha.json`; nunca chama o IBGE.
 
 ## Fontes de dados (IBGE)
 
@@ -56,9 +69,9 @@ PIB per capita = PIB ÷ população do Censo 2022. Crescimento = estimativa mais
 ## Estrutura
 
 ```
-scripts/      fetch-data.ts (coleta + validação, `npm run data`)
+scripts/      fetch-data.ts (coleta + validação), pull-data.ts (baixa os dados publicados)
 src/
-  lib/        ibge.ts (fetch + parsing), validate.ts, indicators.ts, stats.ts, format.ts
+  lib/        ibge.ts (fetch + parsing), validate.ts, data.ts (carrega os dados no site), indicators.ts, stats.ts, format.ts
   components/ MapView, Ranking, Detail, Kpis
   hooks.ts    dados, tema
 ```
