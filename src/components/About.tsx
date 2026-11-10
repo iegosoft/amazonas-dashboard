@@ -8,7 +8,7 @@ const link = 'underline decoration-dotted underline-offset-2 hover:text-slate-90
 const h3 = 'mt-8 text-lg font-bold'
 
 /** Seção "Sobre os dados": de onde vem e como é calculado cada número do painel. */
-export function About({ periods, fetchedAt }: { periods: Periods; fetchedAt: string }) {
+export function About({ periods, fetchedAt, onDownloadAll }: { periods: Periods; fetchedAt: string; onDownloadAll: () => void }) {
   return (
     <section
       id="sobre"
@@ -23,6 +23,13 @@ export function About({ periods, fetchedAt }: { periods: Periods; fetchedAt: str
         semana; a última atualização foi em <strong>{fmtDate(fetchedAt)}</strong>. Abaixo, cada indicador com a fórmula,
         o ano de referência e a tabela de origem, para que qualquer valor possa ser conferido na fonte.
       </p>
+      <button
+        type="button"
+        onClick={onDownloadAll}
+        className="mt-3 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+      >
+        Baixar a tabela completa (CSV)
+      </button>
 
       <h3 className={h3}>Indicadores</h3>
       <dl className="mt-3 grid gap-4 md:grid-cols-2">

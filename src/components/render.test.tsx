@@ -46,7 +46,7 @@ describe('renderização', () => {
 
   it('legenda, ranking e KPIs renderizam', () => {
     expect(renderToString(<Legend indicator={ind} classes={classes} />)).toContain('sem dados')
-    const r = renderToString(<Ranking indicator={ind} period="2026" ranking={ranking} selectedId="1" hoveredId={null} onSelect={() => {}} onHover={() => {}} />)
+    const r = renderToString(<Ranking indicator={ind} period="2026" ranking={ranking} selectedId="1" hoveredId={null} onSelect={() => {}} onHover={() => {}} onDownload={() => {}} />)
     expect(r).toContain('Alfa')
     expect(r).not.toContain('Gama')
     expect(r).toContain('(<!-- -->2026<!-- -->)')
@@ -72,7 +72,7 @@ describe('renderização', () => {
     })
 
     it('cada indicador do painel leva à sua explicação em "Sobre os dados"', () => {
-      const about = renderToString(<About periods={periods} fetchedAt="2026-11-10T18:00:00Z" />)
+      const about = renderToString(<About periods={periods} fetchedAt="2026-11-10T18:00:00Z" onDownloadAll={() => {}} />)
       expect(about).toContain('10 de novembro de 2026')
       for (const i of INDICATORS) {
         const note = renderToString(<SourceNote indicator={i} periods={periods} />)
