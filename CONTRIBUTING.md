@@ -138,6 +138,20 @@ O workflow `.github/workflows/dados.yml` roda toda segunda-feira (08:00 em Manau
 
 Commits automáticos saem no perfil do dono do repositório. A branch `data` é escrita só por esse workflow: não faça commits nela à mão.
 
+### Por que existe um proxy em São Paulo
+
+O IBGE recusa conexões vindas de fora do Brasil, e os servidores do GitHub Actions ficam nos EUA (diagnóstico na issue #20). Por isso a coleta automática passa pela função `api/ibge.ts`, publicada na Vercel na região `gru1` (São Paulo, definida no `vercel.json`). Ela só repassa endereços `https://servicodados.ibge.gov.br/api/` e exige um token.
+
+Configuração (uma vez):
+
+| Onde | Nome | Valor |
+| --- | --- | --- |
+| Vercel → Environment Variables | `COLETA_TOKEN` | um token aleatório longo |
+| GitHub → Secrets → Actions | `IBGE_PROXY_TOKEN` | o mesmo token |
+| GitHub → Secrets → Actions | `IBGE_PROXY_URL` | `https://<domínio-do-site>/api/ibge` |
+
+Rodando `npm run data` no Brasil, nada disso é necessário: sem as variáveis, a coleta vai direto ao IBGE.
+
 ### Rodar manualmente
 
 Em **Actions → Atualização dos dados → Run workflow**, ou:

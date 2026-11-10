@@ -63,6 +63,10 @@ jobs:
 
       - name: Coletar e validar
         id: coleta
+        env:
+          # O IBGE recusa conexões de fora do Brasil: a coleta passa pelo proxy em São Paulo (api/ibge.ts)
+          IBGE_PROXY_URL: ${{ secrets.IBGE_PROXY_URL }}
+          IBGE_PROXY_TOKEN: ${{ secrets.IBGE_PROXY_TOKEN }}
         run: npx tsx scripts/fetch-data.ts --summary resumo.md ${{ inputs.forcar_publicacao && '--force' || '' }}
 
       - name: Publicar na branch data

@@ -8,6 +8,9 @@
  *
  * Saída: 0 = dados válidos (gravados se mudaram) · 1 = falha (nada é gravado).
  * No GitHub Actions, escreve changed=true|false em $GITHUB_OUTPUT.
+ *
+ * Com IBGE_PROXY_URL e IBGE_PROXY_TOKEN definidos, busca pelo proxy em São Paulo
+ * (api/ibge.ts): o IBGE recusa conexões de fora do Brasil.
  */
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -61,7 +64,8 @@ const prev = await readPrevious()
 
 let next: Dataset
 try {
-  const raw = await fetchRaw(AbortSignal.timeout(60_000))
+  const { IBGE_PROXY_URL: url, IBGE_PROXY_TOKEN: token } = process.env
+  const raw = await fetchRaw(AbortSignal.timeout(60_000), url && token ? { url, token } : undefined)
   const formatErrors = checkRaw(raw)
   if (formatErrors.length) await fail('Formato inesperado na resposta do IBGE', formatErrors)
   next = assembleDataset(raw)
