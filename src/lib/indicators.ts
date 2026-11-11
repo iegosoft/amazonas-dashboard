@@ -180,10 +180,10 @@ export const isIndicatorKey = (v: string | null): v is IndicatorKey =>
 
 /** Cores distintas por setor, usadas no gráfico de composição e na legenda. */
 export const SECTOR_COLORS = {
-  agro: '#16a34a',
-  ind: '#f97316',
-  serv: '#2563eb',
-  adm: '#a21caf',
+  agro: 'var(--sector-agro)',
+  ind: 'var(--sector-ind)',
+  serv: 'var(--sector-serv)',
+  adm: 'var(--sector-adm)',
 } as const
 
 export const SECTORS = [

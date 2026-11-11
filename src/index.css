@@ -2,29 +2,182 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter Tight', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Verde-floresta: a cor da marca */
+  --color-forest-50: #ecfdf5;
+  --color-forest-100: #d1fae5;
+  --color-forest-200: #a7f3d0;
+  --color-forest-300: #6ee7b7;
+  --color-forest-400: #34d399;
+  --color-forest-500: #10b981;
+  --color-forest-600: #0d8f68;
+  --color-forest-700: #0b6e52;
+  --color-forest-800: #0b5241;
+  --color-forest-900: #0b3b2e;
+  --color-forest-950: #062019;
+
+  /* Areia: fundo claro, quente */
+  --color-sand-50: #faf8f3;
+  --color-sand-100: #f3efe5;
+  --color-sand-200: #e7e0cf;
+  --color-sand-300: #d6cbb1;
+
+  /* Noite: fundo escuro esverdeado */
+  --color-night-600: #2a3d37;
+  --color-night-700: #1c2c27;
+  --color-night-800: #132220;
+  --color-night-900: #0d1916;
+  --color-night-950: #07100e;
+
+  --animate-rise: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade: fade 0.4s ease both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
 :root {
   color-scheme: light;
+  --map-stroke: rgb(255 255 255 / 0.75);
+  --map-hover: #0b3b2e;
+  --map-label-halo: #ffffff;
+  --map-label: #0d1916;
+  /* Setores: paleta validada para daltonismo (pares adjacentes), com rótulos visíveis */
+  --sector-agro: #1baf7a;
+  --sector-ind: #eb6834;
+  --sector-serv: #2a78d6;
+  --sector-adm: #e87ba4;
+  --chart-point: #2a78d6;
+  --chart-surface: #ffffff;
+  --chart-grid: rgb(13 25 22 / 0.08);
+  --chart-axis: rgb(13 25 22 / 0.55);
 }
 .dark {
   color-scheme: dark;
+  --map-stroke: rgb(7 16 14 / 0.7);
+  --map-hover: #ecfdf5;
+  --map-label-halo: #0d1916;
+  --map-label: #f3efe5;
+  --sector-agro: #199e70;
+  --sector-ind: #d95926;
+  --sector-serv: #3987e5;
+  --sector-adm: #d55181;
+  --chart-point: #3987e5;
+  --chart-surface: #0d1916;
+  --chart-grid: rgb(255 255 255 / 0.07);
+  --chart-axis: rgb(243 239 229 / 0.55);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
-  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  @apply bg-sand-50 font-sans text-night-900 antialiased dark:bg-night-950 dark:text-sand-100;
+  font-feature-settings: 'cv11', 'ss01', 'tnum';
 }
 
+::selection {
+  @apply bg-forest-300/60 text-forest-950;
+}
+
+@utility card {
+  @apply rounded-3xl border border-night-900/[0.06] bg-white shadow-[0_1px_2px_rgb(13_25_22/0.04),0_12px_32px_-16px_rgb(13_25_22/0.14)] dark:border-white/[0.06] dark:bg-night-900 dark:shadow-none;
+}
+@utility eyebrow {
+  @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-forest-700 dark:text-forest-300;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-500 disabled:opacity-50;
+}
+@utility btn-soft {
+  @apply btn border border-night-900/10 bg-white text-night-800 hover:border-night-900/20 hover:bg-sand-100 dark:border-white/10 dark:bg-night-800 dark:text-sand-100 dark:hover:bg-night-700;
+}
+@utility btn-solid {
+  @apply btn bg-forest-900 text-white hover:bg-forest-800 dark:bg-forest-300 dark:text-forest-950 dark:hover:bg-forest-200;
+}
+@utility link {
+  @apply underline decoration-current/30 decoration-1 underline-offset-[3px] transition-colors hover:decoration-current;
+}
+@utility field {
+  @apply w-full rounded-xl border border-night-900/10 bg-sand-50 text-sm text-night-900 outline-none transition placeholder:text-night-900/40 focus:border-forest-500 focus:bg-white focus:ring-4 focus:ring-forest-500/15 dark:border-white/10 dark:bg-night-800 dark:text-sand-100 dark:placeholder:text-white/35 dark:focus:bg-night-800;
+}
+@utility muted {
+  @apply text-night-900/60 dark:text-sand-100/60;
+}
+@utility scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(13 25 22 / 0.18) transparent;
+  &:where(.dark, .dark *) {
+    scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+  }
+}
+
+/* Mapa */
 .map-region {
-  transition: fill 0.35s ease, stroke-width 0.15s ease, opacity 0.2s ease;
+  transition:
+    fill 0.45s ease,
+    fill-opacity 0.2s ease,
+    stroke-width 0.15s ease;
 }
 .map-region:focus-visible {
   outline: none;
   stroke: #f43f5e;
-  stroke-width: 2.5px;
+  stroke-width: 3px;
+}
+.map-region.is-selected {
+  filter: drop-shadow(0 0 6px rgb(244 63 94 / 0.55));
+}
+.map-region.is-compare {
+  filter: drop-shadow(0 0 6px rgb(14 165 233 / 0.55));
+}
+.map-label {
+  paint-order: stroke;
+  stroke: var(--map-label-halo);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  fill: var(--map-label);
+}
+
+/* Entrada suave conforme o bloco aparece na tela (onde o navegador suporta). */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-region {
-    transition: none;
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

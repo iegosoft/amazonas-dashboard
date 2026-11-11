@@ -1,8 +1,8 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { fmtPct, fmtRegiao } from '../lib/format'
-import { INDICATORS, SECTORS, SECTOR_COLORS } from '../lib/indicators'
+import { INDICATORS, SECTORS, SECTOR_COLORS, type Indicator } from '../lib/indicators'
 import { median, rankBy, sum } from '../lib/stats'
 import type { Municipio, Periods } from '../lib/types'
+import { ChevronDownIcon, PinIcon } from './Icons'
 
 interface Props {
   municipios: Municipio[]
@@ -10,9 +10,13 @@ interface Props {
   compare: Municipio | null
   periods: Periods
   onCompareChange: (id: string | null) => void
+  /** Indicador em destaque no mapa, para mostrar a posição do município nele. */
+  indicator?: Indicator
 }
 
-function stateShares(municipios: Municipio[]) {
+type Shares = Record<(typeof SECTORS)[number]['key'], number>
+
+function stateShares(municipios: Municipio[]): Shares {
   const agro = sum(municipios.map((m) => m.vaAgro))
   const ind = sum(municipios.map((m) => m.vaInd))
   const serv = sum(municipios.map((m) => m.vaServ))
@@ -26,69 +30,110 @@ function stateShares(municipios: Municipio[]) {
   }
 }
 
-export function Detail({ municipios, selected, compare, periods, onCompareChange }: Props) {
+export function Detail({ municipios, selected, compare, periods, onCompareChange, indicator }: Props) {
   const state = stateShares(municipios)
   const compareLabel = compare ? compare.nome : 'Mediana dos municípios'
 
-  const chartData = [
-    { name: selected.nome, ...pickShares(selected) },
-    compare ? { name: compare.nome, ...pickShares(compare) } : { name: 'Estado inteiro', ...state },
+  const chartData: { name: string; tone: string; shares: Shares }[] = [
+    { name: selected.nome, tone: 'bg-rose-500', shares: pickShares(selected) },
+    compare
+      ? { name: compare.nome, tone: 'bg-sky-500', shares: pickShares(compare) }
+      : { name: 'Estado inteiro', tone: 'bg-night-900/40 dark:bg-white/40', shares: state },
   ]
 
+  const highlight = indicator ? rankBy(municipios, indicator) : null
+  const highlightRank = highlight?.find((r) => r.m.id === selected.id)?.rank
+
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-rose-600 dark:text-rose-400">Município selecionado</p>
-          <h2 className="text-2xl font-bold leading-tight">{selected.nome}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {fmtRegiao(selected)}
+    <section aria-labelledby="detalhe-titulo" className="card animate-rise flex h-full flex-col p-5 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-600 dark:text-rose-400">
+            <PinIcon className="h-3.5 w-3.5" />
+            Município selecionado
           </p>
+          <h2 id="detalhe-titulo" className="mt-1 font-display text-3xl font-semibold leading-tight tracking-tight">
+            {selected.nome}
+          </h2>
+          <p className="mt-0.5 text-sm muted">{fmtRegiao(selected)}</p>
+          {indicator && highlight && highlightRank && (
+            <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-1 text-xs font-medium text-rose-800 dark:text-rose-200">
+              <strong className="font-semibold tabular-nums">{highlightRank}º</strong> de {highlight.length} em {indicator.label.toLowerCase()}
+            </p>
+          )}
         </div>
-        <label className="text-xs text-slate-500 dark:text-slate-400">
-          <span className="mb-1 block font-medium">Comparar com</span>
-          <select
-            value={compare?.id ?? ''}
-            onChange={(e) => onCompareChange(e.target.value || null)}
-            className="w-56 max-w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          >
-            <option value="">Mediana dos {municipios.length} municípios</option>
-            {municipios
-              .filter((m) => m.id !== selected.id)
-              .map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nome}
-                </option>
-              ))}
-          </select>
+        <label className="w-full text-xs sm:w-56">
+          <span className="mb-1 flex items-center gap-1.5 font-medium muted">
+            <span className="h-2 w-2 rounded-full bg-sky-500" aria-hidden />
+            Comparar com
+          </span>
+          <span className="relative block">
+            <select
+              value={compare?.id ?? ''}
+              onChange={(e) => onCompareChange(e.target.value || null)}
+              className="field cursor-pointer appearance-none py-2 pl-3 pr-9"
+            >
+              <option value="">Mediana dos {municipios.length} municípios</option>
+              {municipios
+                .filter((m) => m.id !== selected.id)
+                .map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nome}
+                  </option>
+                ))}
+            </select>
+            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 muted" />
+          </span>
         </label>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
+      <div className="scroll-thin -mx-1 mt-5 overflow-x-auto px-1">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              <th className="py-1.5 pr-2 font-medium">Indicador</th>
-              <th className="py-1.5 pr-2 text-right font-medium text-rose-600 dark:text-rose-400">{selected.nome}</th>
-              <th className="py-1.5 pr-2 text-right font-medium text-sky-600 dark:text-sky-400">{compareLabel}</th>
-              <th className="py-1.5 text-right font-medium">Posição</th>
+            <tr className="text-left text-[11px] uppercase tracking-wider muted">
+              <th className="pb-2 pr-2 font-medium">Indicador</th>
+              <th className="pb-2 pr-2 text-right font-semibold text-rose-600 normal-case tracking-normal dark:text-rose-400">{selected.nome}</th>
+              <th className="pb-2 pr-2 text-right font-semibold text-sky-600 normal-case tracking-normal dark:text-sky-400">{compareLabel}</th>
+              <th className="pb-2 text-right font-medium">Posição</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-night-900/[0.06] dark:divide-white/[0.06]">
             {INDICATORS.map((ind) => {
               const v = ind.get(selected)
               const other = compare ? ind.get(compare) : median(municipios.map(ind.get).filter((x): x is number => x != null))
-              const rank = rankBy(municipios, ind).find((r) => r.m.id === selected.id)?.rank
+              const ranked = rankBy(municipios, ind)
+              const rank = ranked.find((r) => r.m.id === selected.id)?.rank
+              const scale = Math.max(Math.abs(v ?? 0), Math.abs(other ?? 0)) || 1
+              const active = ind.key === indicator?.key
               return (
-                <tr key={ind.key} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
-                  <td className="py-1.5 pr-2 text-slate-600 dark:text-slate-300">
-                    {ind.label} <span className="text-xs text-slate-400 dark:text-slate-500">{ind.period(periods)}</span>
+                <tr key={ind.key} className={active ? 'bg-forest-500/[0.06]' : ''}>
+                  <td className="py-2 pr-2">
+                    <span className="block leading-tight">{ind.label}</span>
+                    <span className="text-[11px] muted">{ind.period(periods)}</span>
                   </td>
-                  <td className="py-1.5 pr-2 text-right font-semibold tabular-nums">{v == null ? '—' : ind.format(v)}</td>
-                  <td className="py-1.5 pr-2 text-right tabular-nums text-slate-600 dark:text-slate-300">
-                    {other == null ? '—' : ind.format(other)}
+                  <td className="py-2 pr-2 text-right align-top">
+                    <span className="whitespace-nowrap font-semibold tabular-nums">{v == null ? '—' : ind.format(v)}</span>
+                    <MiniBar pct={v == null ? 0 : (Math.abs(v) / scale) * 100} className="bg-rose-500" />
                   </td>
-                  <td className="py-1.5 text-right tabular-nums text-slate-500">{rank ? `${rank}º` : '—'}</td>
+                  <td className="py-2 pr-2 text-right align-top">
+                    <span className="whitespace-nowrap tabular-nums muted">{other == null ? '—' : ind.format(other)}</span>
+                    <MiniBar pct={other == null ? 0 : (Math.abs(other) / scale) * 100} className="bg-sky-500" />
+                  </td>
+                  <td className="py-2 text-right align-top">
+                    {rank ? (
+                      <span
+                        className={`inline-block min-w-9 rounded-full px-1.5 py-0.5 text-center text-xs font-semibold tabular-nums ${
+                          rank <= Math.ceil(ranked.length / 10)
+                            ? 'bg-forest-500/15 text-forest-800 dark:text-forest-200'
+                            : 'bg-night-900/[0.05] text-night-900/60 dark:bg-white/[0.06] dark:text-sand-100/60'
+                        }`}
+                      >
+                        {rank}º
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                 </tr>
               )
             })}
@@ -96,43 +141,66 @@ export function Detail({ municipios, selected, compare, periods, onCompareChange
         </table>
       </div>
 
-      <h3 className="mt-5 text-sm font-semibold">De onde vem a riqueza (valor adicionado, {periods.va})</h3>
-      <div className="mt-2 h-40" role="img" aria-label={`Composição setorial: ${chartData.map((d) => `${d.name}: ${SECTORS.map((s) => `${s.label} ${fmtPct(d[s.key])}`).join(', ')}`).join('; ')}`}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 4 }} barCategoryGap={14}>
-            <CartesianGrid horizontal={false} stroke="currentColor" strokeOpacity={0.12} />
-            <XAxis type="number" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: 'currentColor' }} stroke="currentColor" strokeOpacity={0.3} />
-            <YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 12, fill: 'currentColor' }} stroke="currentColor" strokeOpacity={0.3} />
-            <Tooltip
-              cursor={{ fill: 'currentColor', fillOpacity: 0.06 }}
-              formatter={(v) => fmtPct(Number(v))}
-              contentStyle={{ borderRadius: 8, fontSize: 12 }}
-            />
-            {SECTORS.map((s) => (
-              <Bar key={s.key} dataKey={s.key} name={s.label} stackId="a" fill={SECTOR_COLORS[s.id]} isAnimationActive={false} />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="mt-6 border-t border-night-900/[0.06] pt-5 dark:border-white/[0.06]">
+        <h3 className="font-display text-lg font-semibold tracking-tight">De onde vem a riqueza</h3>
+        <p className="text-xs muted">Valor adicionado por setor, {periods.va}</p>
+        <div
+          className="mt-3 space-y-3"
+          role="img"
+          aria-label={`Composição setorial: ${chartData.map((d) => `${d.name}: ${SECTORS.map((s) => `${s.label} ${fmtPct(d.shares[s.key])}`).join(', ')}`).join('; ')}`}
+        >
+          {chartData.map((d) => (
+            <div key={d.name}>
+              <div className="mb-1 flex items-center gap-1.5 text-xs font-medium">
+                <span className={`h-2 w-2 rounded-full ${d.tone}`} aria-hidden />
+                {d.name}
+              </div>
+              <div className="flex h-7 overflow-hidden rounded-lg bg-night-900/[0.05] dark:bg-white/[0.06]">
+                {SECTORS.map((s) => {
+                  const pct = d.shares[s.key]
+                  return (
+                    <span
+                      key={s.key}
+                      title={`${s.label}: ${fmtPct(pct)}`}
+                      className="flex items-center justify-center overflow-hidden text-[11px] font-semibold text-night-950 transition-[width] duration-700 ease-out [&:not(:last-child)]:border-r [&:not(:last-child)]:border-white/40 dark:[&:not(:last-child)]:border-night-900/40"
+                      style={{ width: `${pct}%`, background: SECTOR_COLORS[s.id] }}
+                    >
+                      {pct >= 9 && <span>{Math.round(pct)}%</span>}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs muted">
+          {SECTORS.map((s) => (
+            <li key={s.key} className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: SECTOR_COLORS[s.id] }} />
+              {s.label}
+            </li>
+          ))}
+        </ul>
+        {!compare && (
+          <p className="mt-3 text-xs muted">
+            Sem município de comparação, a tabela mostra a mediana dos municípios (o município típico) e o gráfico mostra a
+            composição da economia do estado inteiro.
+          </p>
+        )}
       </div>
-      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
-        {SECTORS.map((s) => (
-          <li key={s.key} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: SECTOR_COLORS[s.id] }} />
-            {s.label}
-          </li>
-        ))}
-      </ul>
-      {!compare && (
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          Sem município de comparação, a tabela mostra a mediana dos municípios (o município típico) e o gráfico mostra a
-          composição da economia do estado inteiro.
-        </p>
-      )}
     </section>
   )
 }
 
-function pickShares(m: Municipio) {
+function MiniBar({ pct, className }: { pct: number; className: string }) {
+  return (
+    <span aria-hidden className="ml-auto mt-1 block h-1 w-16 overflow-hidden rounded-full bg-night-900/[0.05] dark:bg-white/[0.06]">
+      <span className={`ml-auto block h-full rounded-full transition-[width] duration-500 ${className}`} style={{ width: `${pct}%` }} />
+    </span>
+  )
+}
+
+function pickShares(m: Municipio): Shares {
   return {
     shareAgro: m.shareAgro ?? 0,
     shareInd: m.shareInd ?? 0,
