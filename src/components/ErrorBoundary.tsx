@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.error) return this.props.children
     return (
-      <div role="alert" className="rounded-2xl border border-amber-300 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/40">
+      <div role="alert" className="rounded-3xl border border-amber-300 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/40 lg:col-span-full">
         <h2 className="font-semibold text-amber-900 dark:text-amber-200">Não foi possível exibir {this.props.label}.</h2>
         <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">O restante do painel continua funcionando.</p>
         <div className="mt-3 flex flex-wrap gap-2">

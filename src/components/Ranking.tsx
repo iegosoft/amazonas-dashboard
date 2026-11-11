@@ -1,6 +1,7 @@
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import type { Indicator } from '../lib/indicators'
 import type { Ranked } from '../lib/stats'
+import { DownloadIcon, SearchIcon, SortIcon } from './Icons'
 
 interface Props {
   indicator: Indicator
@@ -12,14 +13,31 @@ interface Props {
   onSelect: (id: string) => void
   onHover: (id: string | null) => void
   onDownload: () => void
+  /** Cor de cada valor no mapa, para a barra combinar com a legenda */
+  colorOf?: (v: number | null) => string
+  className?: string
 }
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
-export function Ranking({ indicator, period, ranking, selectedId, hoveredId, onSelect, onHover, onDownload }: Props) {
+const MEDAL = ['bg-amber-400 text-amber-950', 'bg-slate-300 text-slate-800', 'bg-orange-300 text-orange-950']
+
+export function Ranking({
+  indicator,
+  period,
+  ranking,
+  selectedId,
+  hoveredId,
+  onSelect,
+  onHover,
+  onDownload,
+  colorOf,
+  className = '',
+}: Props) {
   const [query, setQuery] = useState('')
   const [asc, setAsc] = useState(false)
   const deferred = useDeferredValue(query)
+  const listRef = useRef<HTMLOListElement>(null)
 
   const rows = useMemo(() => {
     const q = norm(deferred.trim())
@@ -31,40 +49,60 @@ export function Ranking({ indicator, period, ranking, selectedId, hoveredId, onS
   const min = Math.min(0, ranking[ranking.length - 1]?.value ?? 0)
   const span = max - min || 1
 
+  // Quando o município muda (pelo mapa, por exemplo), traz a linha dele para dentro da lista.
+  // Rola só a lista, nunca a página.
+  useEffect(() => {
+    const list = listRef.current
+    const row = list?.querySelector<HTMLElement>('[aria-current="true"]')
+    if (!list || !row) return
+    const top = row.offsetTop // a lista é `relative`, então offsetTop já é relativo a ela
+    if (top < list.scrollTop || top + row.offsetHeight > list.scrollTop + list.clientHeight)
+      list.scrollTo?.({ top: Math.max(0, top - list.clientHeight / 2 + row.offsetHeight / 2), behavior: 'smooth' })
+  }, [selectedId, indicator.key, asc])
+
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">Ranking · {indicator.label} <span className="font-normal text-slate-500 dark:text-slate-400">({period})</span></h2>
+    <section id="ranking-lista" aria-labelledby="ranking-titulo" className={`card reveal flex flex-col p-5 sm:p-6 ${className}`}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="eyebrow">Ranking</p>
+          <h2 id="ranking-titulo" className="mt-1 font-display text-2xl font-semibold tracking-tight">
+            {indicator.label} <span className="font-sans text-sm font-normal muted">({period})</span>
+          </h2>
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={onDownload}
-            className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            Baixar CSV
-          </button>
-          <button
-            type="button"
             onClick={() => setAsc((a) => !a)}
-            className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="btn-soft px-3 py-1.5 text-xs"
             aria-label={asc ? 'Ordenar do maior para o menor' : 'Ordenar do menor para o maior'}
           >
-            {asc ? '↑ menor primeiro' : '↓ maior primeiro'}
+            <SortIcon className="h-3.5 w-3.5" />
+            {asc ? 'Menor primeiro' : 'Maior primeiro'}
+          </button>
+          <button type="button" onClick={onDownload} className="btn-soft px-3 py-1.5 text-xs">
+            <DownloadIcon className="h-3.5 w-3.5" />
+            CSV
           </button>
         </div>
       </div>
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Buscar município…"
-        aria-label="Buscar município"
-        className="mb-3 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-800"
-      />
-      <ol className="max-h-80 space-y-0.5 overflow-y-auto pr-1">
+
+      <label className="relative mt-4 block">
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 muted" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar município…"
+          aria-label="Buscar município"
+          className="field py-2.5 pl-9 pr-3"
+        />
+      </label>
+
+      <ol ref={listRef} className="scroll-thin relative -mx-2 mt-3 max-h-[26rem] flex-1 space-y-0.5 overflow-y-auto px-2 lg:max-h-[30rem]">
         {rows.map(({ m, value, rank }) => {
           const active = m.id === selectedId
           const hot = m.id === hoveredId
+          const pct = Math.max(1.5, ((value - min) / span) * 100)
           return (
             <li key={m.id}>
               <button
@@ -75,29 +113,38 @@ export function Ranking({ indicator, period, ranking, selectedId, hoveredId, onS
                 onFocus={() => onHover(m.id)}
                 onBlur={() => onHover(null)}
                 aria-current={active ? 'true' : undefined}
-                className={`relative grid w-full grid-cols-[1.75rem_1fr_auto] items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm ${
+                className={`group grid w-full grid-cols-[1.9rem_1fr_auto] items-center gap-x-3 rounded-xl px-2.5 py-2 text-left text-sm transition-colors ${
                   active
-                    ? 'bg-rose-50 ring-1 ring-rose-400 dark:bg-rose-950/40'
+                    ? 'bg-rose-500/[0.08] ring-1 ring-rose-400/70 dark:bg-rose-500/10'
                     : hot
-                      ? 'bg-slate-100 dark:bg-slate-800'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      ? 'bg-night-900/[0.04] dark:bg-white/[0.05]'
+                      : 'hover:bg-night-900/[0.03] dark:hover:bg-white/[0.04]'
                 }`}
               >
                 <span
-                  aria-hidden
-                  className="absolute inset-y-0 left-0 bg-sky-500/15"
-                  style={{ width: `${Math.max(2, ((value - min) / span) * 100)}%` }}
-                />
-                <span className="relative text-xs tabular-nums text-slate-400">{rank}</span>
-                <span className="relative truncate font-medium">{m.nome}</span>
-                <span className="relative text-xs tabular-nums text-slate-600 dark:text-slate-300">
+                  className={`grid h-6 w-6 place-items-center rounded-full text-[11px] font-semibold tabular-nums ${
+                    rank <= 3 ? MEDAL[rank - 1] : 'bg-night-900/[0.05] text-night-900/60 dark:bg-white/[0.06] dark:text-sand-100/60'
+                  }`}
+                >
+                  {rank}
+                </span>
+                <span className="min-w-0">
+                  <span className={`block truncate font-medium ${active ? 'text-rose-700 dark:text-rose-300' : ''}`}>{m.nome}</span>
+                  <span aria-hidden className="mt-1 block h-1 overflow-hidden rounded-full bg-night-900/[0.05] dark:bg-white/[0.06]">
+                    <span
+                      className="block h-full rounded-full transition-[width] duration-500"
+                      style={{ width: `${pct}%`, background: colorOf ? colorOf(value) : 'currentColor' }}
+                    />
+                  </span>
+                </span>
+                <span className="text-xs font-medium tabular-nums text-night-900/75 dark:text-sand-100/75">
                   {indicator.format(value)}
                 </span>
               </button>
             </li>
           )
         })}
-        {rows.length === 0 && <li className="px-2 py-4 text-center text-sm text-slate-500">Nenhum município encontrado.</li>}
+        {rows.length === 0 && <li className="px-2 py-8 text-center text-sm muted">Nenhum município encontrado.</li>}
       </ol>
     </section>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { shareLink, type ShareResult } from '../lib/share'
+import { CheckIcon, ShareIcon } from './Icons'
 
 const LABEL: Record<ShareResult | 'idle', string> = {
   idle: 'Compartilhar',
@@ -10,7 +11,7 @@ const LABEL: Record<ShareResult | 'idle', string> = {
 }
 
 /** Compartilha a tela atual: o link já inclui indicador, município e comparação. */
-export function ShareButton() {
+export function ShareButton({ className = '' }: { className?: string }) {
   const [status, setStatus] = useState<ShareResult | 'idle'>('idle')
 
   useEffect(() => {
@@ -19,6 +20,8 @@ export function ShareButton() {
     return () => clearTimeout(t)
   }, [status])
 
+  const ok = status === 'copied' || status === 'shared'
+
   return (
     <button
       type="button"
@@ -26,9 +29,12 @@ export function ShareButton() {
         const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false
         setStatus(await shareLink(window.location.href, document.title, coarse))
       }}
-      className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+      className={className}
     >
-      <span aria-live="polite">{LABEL[status]}</span>
+      {ok ? <CheckIcon className="h-4 w-4" /> : <ShareIcon className="h-4 w-4" />}
+      <span aria-live="polite" className="max-sm:sr-only">
+        {LABEL[status]}
+      </span>
     </button>
   )
 }
