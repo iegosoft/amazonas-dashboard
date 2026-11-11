@@ -3,10 +3,10 @@ import { fmtPct } from '../lib/format'
 import { SECTORS, SECTOR_COLORS } from '../lib/indicators'
 import { sum } from '../lib/stats'
 import type { Municipio, Periods } from '../lib/types'
-import { ChartTooltip, TipRow } from './ChartTooltip'
 import { Segmented } from './Concentration'
 
 type SectorKey = (typeof SECTORS)[number]['key']
+type Shares = Record<SectorKey, number>
 
 interface Props {
   municipios: Municipio[]
@@ -17,11 +17,18 @@ interface Props {
   onHover: (id: string | null) => void
 }
 
-/** Barras 100% empilhadas: a composição da economia de cada um dos municípios, ordenadas pelo setor escolhido. */
+const FIRST = 15
+
+/** Rótulo + 4 colunas de setor; no celular só a coluna do setor escolhido. */
+const GRID = 'grid grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1.3fr)] items-center gap-x-3 sm:grid-cols-[2rem_minmax(9rem,13rem)_repeat(4,minmax(0,1fr))] sm:gap-x-5'
+
+/**
+ * Um setor por coluna, todas na mesma escala (0–100%): cada barra parte do zero, então dá para
+ * comparar qualquer setor entre municípios. O traço vertical marca a média do estado.
+ */
 export function SectorProfile({ municipios, periods, selectedId, hoveredId, onSelect, onHover }: Props) {
   const [sortBy, setSortBy] = useState<SectorKey>('shareAdm')
   const [showAll, setShowAll] = useState(false)
-  const [tip, setTip] = useState<{ x: number; y: number; w: number } | null>(null)
 
   const rows = useMemo(
     () => municipios.filter((m) => m[sortBy] != null).sort((a, b) => (b[sortBy] ?? 0) - (a[sortBy] ?? 0)),
@@ -30,14 +37,12 @@ export function SectorProfile({ municipios, periods, selectedId, hoveredId, onSe
   const state = useMemo(() => {
     const v = { shareAgro: sum(municipios.map((m) => m.vaAgro)), shareInd: sum(municipios.map((m) => m.vaInd)), shareServ: sum(municipios.map((m) => m.vaServ)), shareAdm: sum(municipios.map((m) => m.vaAdm)) }
     const t = v.shareAgro + v.shareInd + v.shareServ + v.shareAdm || 1
-    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, (x / t) * 100])) as Record<SectorKey, number>
+    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, (x / t) * 100])) as Shares
   }, [municipios])
 
-  const visible = showAll ? rows : rows.slice(0, 16)
-  const half = Math.ceil(visible.length / 2)
-  const columns = showAll ? [visible.slice(0, half), visible.slice(half)] : [visible]
-  const hovered = municipios.find((m) => m.id === hoveredId)
+  const visible = showAll ? rows : rows.slice(0, FIRST)
   const sortLabel = SECTORS.find((s) => s.key === sortBy)!.label.toLowerCase()
+  const shares = (m: Municipio): Shares => ({ shareAgro: m.shareAgro ?? 0, shareInd: m.shareInd ?? 0, shareServ: m.shareServ ?? 0, shareAdm: m.shareAdm ?? 0 })
 
   return (
     <div className="card reveal p-5 sm:p-6">
@@ -45,82 +50,74 @@ export function SectorProfile({ municipios, periods, selectedId, hoveredId, onSe
         <div>
           <h3 className="font-display text-xl font-semibold tracking-tight">De onde vem a riqueza de cada município</h3>
           <p className="max-w-2xl text-sm muted">
-            Divisão do valor adicionado entre os quatro setores ({periods.va}). Escolha um setor para ordenar: no topo, quem mais depende dele.
+            Quanto cada setor pesa no valor adicionado do município ({periods.va}). Clique num setor para ordenar: no topo, quem mais
+            depende dele.
           </p>
         </div>
-        <Segmented
-          label="Ordenar por setor"
-          value={sortBy}
-          onChange={setSortBy}
-          options={SECTORS.map((s) => ({ value: s.key, label: s.label, swatch: SECTOR_COLORS[s.id] }))}
-        />
-      </div>
-
-      <div className="mt-5 rounded-xl bg-night-900/[0.035] py-1.5 dark:bg-white/[0.04]">
-        <Row
-          label="Estado inteiro"
-          shares={state}
-          emphasis
-          sortBy={sortBy}
-          onEnter={() => {}}
-        />
-      </div>
-
-      <div
-        className="relative mt-3"
-        onMouseMove={(e) => {
-          const r = e.currentTarget.getBoundingClientRect()
-          setTip({ x: e.clientX - r.left, y: e.clientY - r.top, w: r.width })
-        }}
-        onMouseLeave={() => {
-          setTip(null)
-          onHover(null)
-        }}
-      >
-        <div className={`grid gap-x-8 ${showAll ? 'lg:grid-cols-2' : ''}`}>
-          {columns.map((col, ci) => (
-            <ol key={ci} className="space-y-0.5" start={ci === 0 ? 1 : half + 1}>
-              {col.map((m) => {
-                const rank = rows.indexOf(m) + 1
-                return (
-                  <li key={m.id}>
-                    <Row
-                      rank={rank}
-                      label={m.nome}
-                      shares={{ shareAgro: m.shareAgro ?? 0, shareInd: m.shareInd ?? 0, shareServ: m.shareServ ?? 0, shareAdm: m.shareAdm ?? 0 }}
-                      sortBy={sortBy}
-                      selected={m.id === selectedId}
-                      hovered={m.id === hoveredId}
-                      onEnter={() => onHover(m.id)}
-                      onClick={() => onSelect(m.id)}
-                    />
-                  </li>
-                )
-              })}
-            </ol>
-          ))}
+        <div className="sm:hidden">
+          <Segmented
+            label="Ordenar por setor"
+            value={sortBy}
+            onChange={setSortBy}
+            options={SECTORS.map((s) => ({ value: s.key, label: s.label, swatch: SECTOR_COLORS[s.id] }))}
+          />
         </div>
-        {hovered && tip && hovered.shareAgro != null && (
-          <ChartTooltip x={tip.x} y={tip.y} width={tip.w}>
-            <p className="mb-1.5 text-sm font-semibold">{hovered.nome}</p>
-            {SECTORS.map((s) => (
-              <TipRow key={s.key} label={s.label} value={fmtPct(hovered[s.key] ?? 0)} swatch={SECTOR_COLORS[s.id]} />
-            ))}
-          </ChartTooltip>
-        )}
+      </div>
+
+      <div className="mt-5" onMouseLeave={() => onHover(null)}>
+        <div className={`${GRID} border-b border-night-900/[0.08] pb-2 dark:border-white/[0.08]`}>
+          <span />
+          <span className="text-[11px] font-semibold uppercase tracking-wider muted">Município</span>
+          {SECTORS.map((s) => {
+            const active = s.key === sortBy
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setSortBy(s.key)}
+                aria-pressed={active}
+                className={`${active ? 'flex' : 'hidden sm:flex'} items-center gap-1.5 rounded-md py-1 text-left text-xs font-semibold transition-colors ${
+                  active ? '' : 'text-night-900/55 hover:text-night-900 dark:text-sand-100/55 dark:hover:text-white'
+                }`}
+              >
+                <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: SECTOR_COLORS[s.id] }} />
+                <span className="truncate">{s.label}</span>
+                <span aria-hidden className={active ? '' : 'opacity-0'}>
+                  ↓
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <Row label="Estado inteiro" shares={state} sortBy={sortBy} emphasis />
+
+        <ol className="divide-y divide-night-900/[0.05] dark:divide-white/[0.05]">
+          {visible.map((m, i) => (
+            <li key={m.id}>
+              <Row
+                rank={i + 1}
+                label={m.nome}
+                shares={shares(m)}
+                state={state}
+                sortBy={sortBy}
+                selected={m.id === selectedId}
+                hovered={m.id === hoveredId}
+                onEnter={() => onHover(m.id)}
+                onClick={() => onSelect(m.id)}
+              />
+            </li>
+          ))}
+        </ol>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs muted" aria-label="Legenda dos setores">
-          {SECTORS.map((s) => (
-            <li key={s.key} className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: SECTOR_COLORS[s.id] }} />
-              {s.label}
-            </li>
-          ))}
-        </ul>
+        <p className="flex items-center gap-2 text-xs muted">
+          <span className="inline-block h-3.5 w-0.5 rounded-full bg-night-900/60 dark:bg-white/60" aria-hidden />
+          média do estado inteiro
+        </p>
         <button type="button" onClick={() => setShowAll((v) => !v)} className="btn-soft px-3 py-1.5 text-xs">
-          {showAll ? 'Mostrar só os 16 primeiros' : `Mostrar os ${rows.length} municípios`}
+          {showAll ? `Mostrar só os ${FIRST} primeiros` : `Mostrar os ${rows.length} municípios`}
         </button>
       </div>
       <p className="sr-only">Ordenado por peso de {sortLabel}.</p>
@@ -132,6 +129,7 @@ function Row({
   rank,
   label,
   shares,
+  state,
   sortBy,
   selected,
   hovered,
@@ -141,39 +139,46 @@ function Row({
 }: {
   rank?: number
   label: string
-  shares: Record<SectorKey, number>
+  shares: Shares
+  state?: Shares
   sortBy: SectorKey
   selected?: boolean
   hovered?: boolean
   emphasis?: boolean
-  onEnter: () => void
+  onEnter?: () => void
   onClick?: () => void
 }) {
-  // O setor escolhido vai primeiro, encostado no eixo, para a ordenação ficar visível.
-  const order = [SECTORS.find((s) => s.key === sortBy)!, ...SECTORS.filter((s) => s.key !== sortBy)]
   const Tag = onClick ? 'button' : 'div'
   return (
     <Tag
       {...(onClick ? { type: 'button' as const, onClick } : {})}
       onMouseEnter={onEnter}
       onFocus={onEnter}
-      aria-label={`${label}: ${order.map((s) => `${s.label} ${fmtPct(shares[s.key])}`).join(', ')}`}
-      className={`grid w-full grid-cols-[1.75rem_minmax(0,8.5rem)_1fr_3rem] items-center gap-2 rounded-lg px-1.5 py-1 text-left text-xs transition-colors sm:grid-cols-[1.75rem_9.5rem_1fr_3rem] ${
+      aria-label={`${label}: ${SECTORS.map((s) => `${s.label} ${fmtPct(shares[s.key])}`).join(', ')}`}
+      className={`${GRID} w-full rounded-lg px-1 text-left text-sm transition-colors ${emphasis ? 'my-1 bg-night-900/[0.035] py-2.5 dark:bg-white/[0.04]' : 'py-2'} ${
         selected ? 'bg-rose-500/[0.08] ring-1 ring-rose-400/70' : hovered ? 'bg-night-900/[0.04] dark:bg-white/[0.05]' : ''
       }`}
     >
-      <span className="text-right tabular-nums muted">{rank ?? ''}</span>
+      <span className="text-right text-xs tabular-nums muted">{rank ?? ''}</span>
       <span className={`truncate ${emphasis ? 'font-semibold' : 'font-medium'} ${selected ? 'text-rose-700 dark:text-rose-300' : ''}`}>{label}</span>
-      <span className={`flex gap-[2px] overflow-hidden rounded ${emphasis ? 'h-4' : 'h-3'}`} aria-hidden>
-        {order.map((s) => (
-          <span
-            key={s.key}
-            className="h-full transition-[width] duration-700 ease-out first:rounded-l last:rounded-r"
-            style={{ width: `${shares[s.key]}%`, background: SECTOR_COLORS[s.id] }}
-          />
-        ))}
-      </span>
-      <span className="text-right font-semibold tabular-nums">{fmtPct(shares[sortBy])}</span>
+      {SECTORS.map((s) => (
+        <Bar key={s.key} value={shares[s.key]} mark={state?.[s.key]} color={SECTOR_COLORS[s.id]} active={s.key === sortBy} strong={emphasis} />
+      ))}
     </Tag>
+  )
+}
+
+function Bar({ value, mark, color, active, strong }: { value: number; mark?: number; color: string; active: boolean; strong?: boolean }) {
+  return (
+    <span className={`${active ? 'flex' : 'hidden sm:flex'} min-w-0 items-center gap-2`} aria-hidden>
+      <span className="relative h-2.5 flex-1 rounded-full bg-night-900/[0.06] dark:bg-white/[0.07]">
+        <span
+          className="absolute inset-y-0 left-0 rounded-full transition-[width,opacity] duration-700 ease-out"
+          style={{ width: `${Math.max(value, 0)}%`, background: color, opacity: active || strong ? 1 : 0.5 }}
+        />
+        {mark != null && <span className="absolute -inset-y-1 w-0.5 -translate-x-1/2 rounded-full bg-night-900/60 dark:bg-white/60" style={{ left: `${mark}%` }} />}
+      </span>
+      <span className={`w-12 shrink-0 text-right tabular-nums ${active || strong ? 'font-semibold' : 'muted'}`}>{fmtPct(value)}</span>
+    </span>
   )
 }

@@ -91,7 +91,7 @@ export default function App() {
             : 'border-b border-transparent'
         }`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-[100rem] items-center justify-between gap-3 px-4 sm:px-6">
           <a href="#top" className={`flex shrink-0 items-center gap-2.5 ${scrolled ? 'text-night-900 dark:text-white' : 'text-white'}`}>
             <Logo className="h-8 w-8" />
             <span className="font-display text-[17px] font-bold tracking-tight">
@@ -149,7 +149,7 @@ export default function App() {
       ) : (
         <>
           <Hero geo={null} />
-          <div id="conteudo" className="relative z-10 mx-auto -mt-24 w-full max-w-7xl flex-1 px-4 sm:-mt-28 sm:px-6">
+          <div id="conteudo" className="relative z-10 mx-auto -mt-24 w-full max-w-[100rem] flex-1 px-4 sm:-mt-28 sm:px-6">
             {state.status === 'loading' && <Skeleton />}
             {state.status === 'error' && (
               <div role="alert" className="card border-rose-300 p-6 dark:border-rose-900">
@@ -165,7 +165,7 @@ export default function App() {
       )}
 
       <footer className="mt-24 bg-forest-950 text-white/65">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 text-sm sm:px-6 md:grid-cols-[1.2fr_1fr]">
+        <div className="mx-auto grid max-w-[100rem] gap-8 px-4 py-12 text-sm sm:px-6 md:grid-cols-[1.2fr_1fr]">
           <div>
             <div className="flex items-center gap-2.5 text-white">
               <Logo className="h-8 w-8" />
@@ -294,7 +294,7 @@ function Dashboard({ data }: { data: PublishedDataset }) {
         }
       />
 
-      <main id="conteudo" className="relative z-10 mx-auto -mt-24 w-full max-w-7xl flex-1 space-y-8 px-4 sm:-mt-28 sm:px-6">
+      <main id="conteudo" className="relative z-10 mx-auto -mt-24 w-full max-w-[100rem] flex-1 space-y-8 px-4 sm:-mt-28 sm:px-6">
         {/* 01 · Visão geral */}
         <section id="visao-geral" aria-label="Visão geral" className="scroll-mt-28 space-y-6">
           <Kpis municipios={data.municipios} periods={data.periods} />

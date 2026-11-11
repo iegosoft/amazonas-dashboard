@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 /**
- * Só monta o conteúdo quando ele chega perto da tela. Os gráficos mais pesados (e o
- * d3-hierarchy) não entram no primeiro carregamento da página.
+ * Só monta o conteúdo quando ele chega perto da tela. Os gráficos mais pesados não entram
+ * no primeiro carregamento da página.
  */
 export function LazyMount({ children, minHeight, label }: { children: ReactNode; minHeight: number; label: string }) {
   const ref = useRef<HTMLDivElement>(null)
