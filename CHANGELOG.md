@@ -2,6 +2,13 @@
 
 Mudanças relevantes de cada versão. Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.0.0] - 2026-11-11
+
+Primeira versão estável: painel no ar, dados do IBGE atualizados toda semana e link pronto para divulgar.
+
+### Adicionado
+- Prévia do link ao compartilhar no WhatsApp, LinkedIn e X: título, descrição e imagem com o mapa dos 62 municípios. (#15)
+
 ## [0.4.0] - 2026-11-11
 
 Painel redesenhado: uma página que guia quem chega, com gráficos que dão a conclusão de cara.
@@ -63,6 +70,8 @@ Base confiável: dados validados antes de publicar, atualizados automaticamente 
 ### Removido
 - Arquivos que sobraram do template do Vite. (#3)
 
+[1.0.0]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v1.0.0
+[0.4.0]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.4.0
 [0.3.0]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.3.0
 [0.2.1]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.2.1
 [0.2.0]: https://github.com/iegosoft/amazonas-dashboard/releases/tag/v0.2.0
