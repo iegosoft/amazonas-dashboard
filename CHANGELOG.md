@@ -2,6 +2,25 @@
 
 Mudanças relevantes de cada versão. Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.4.0] - 2026-11-11
+
+Painel redesenhado: uma página que guia quem chega, com gráficos que dão a conclusão de cara.
+
+### Adicionado
+- Abertura com busca de município, sugestões e passo a passo de uso; página dividida em capítulos numerados, com menu que acompanha a rolagem.
+- Capítulo "Onde vivem as pessoas e onde está a riqueza": título com a conclusão, barras comparando população e PIB (maior município, 4 seguintes e demais), lista dos municípios com as duas fatias (10 maiores ou os 62) e rosquinhas por mesorregião.
+- Gráfico de dispersão tamanho × PIB per capita, com filtro por mesorregião.
+- Perfil setorial dos 62 municípios: uma coluna por setor, com o valor escrito e a média do estado marcada; ordenável por setor.
+- README com tour pelo painel e prints. (#15)
+
+### Alterado
+- Nova identidade visual: tipografia Inter Tight + Inter, ícones próprios, favicon e cores dos setores validadas para daltonismo nos temas claro e escuro. (#12)
+- A página ocupa até 1600 px de largura.
+- Gráficos pesados só carregam quando chegam perto da tela.
+
+### Removido
+- Recharts e d3-hierarchy: os gráficos agora são SVG/HTML próprios. O gráfico de detalhe caiu de ~355 kB para ~7 kB. (#14)
+
 ## [0.3.0] - 2026-11-10
 
 Transparência: de onde vem e como é calculado cada número, e os dados nas mãos de quem usa o painel.
