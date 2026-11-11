@@ -6,6 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Amazonas em números · painel de dados do IBGE</title>
     <meta name="description" content="Painel interativo com população, PIB e perfil econômico dos 62 municípios do Amazonas, com dados abertos do IBGE." />
+    <meta name="theme-color" content="#062019" />
+    <meta property="og:title" content="Amazonas em números" />
+    <meta property="og:description" content="População, PIB e perfil econômico dos 62 municípios do Amazonas, com dados abertos do IBGE." />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500..800&family=Inter:wght@400..700&display=swap"
+    />
+    <script>
+      // Aplica o tema salvo antes da primeira pintura, para não piscar claro → escuro.
+      try {
+        var t = localStorage.getItem('painel-am:theme')
+        if (t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark')
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
