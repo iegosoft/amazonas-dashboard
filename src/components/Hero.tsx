@@ -14,7 +14,7 @@ export function Hero({ geo, fetchedAt, search, quickPicks }: { geo: MunGeo | nul
   return (
     <section id="top" className="relative isolate overflow-hidden bg-forest-950 pt-16 text-white">
       <HeroBackdrop geo={geo} />
-      <div className="relative mx-auto max-w-7xl px-4 pb-36 pt-10 sm:px-6 sm:pb-40 sm:pt-16">
+      <div className="relative mx-auto max-w-[100rem] px-4 pb-36 pt-10 sm:px-6 sm:pb-40 sm:pt-16">
         <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-xs font-medium text-forest-200 backdrop-blur">
           <span className="relative flex h-2 w-2" aria-hidden>
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-forest-400 opacity-60" />

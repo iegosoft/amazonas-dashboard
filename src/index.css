@@ -67,6 +67,18 @@
   --sector-serv: #2a78d6;
   --sector-adm: #e87ba4;
   --chart-point: #2a78d6;
+  /* Concentração: maior município → seguintes → demais, do verde forte ao claro */
+  --conc-1: #1f7a5e;
+  --conc-2: #5fbf9b;
+  --conc-3: #d9dfdc;
+  /* Pessoas × riqueza: par validado para daltonismo, sempre com rótulo */
+  --conc-pop: #0d8f68;
+  --conc-pib: #c27c0e;
+  /* Mesorregiões: quatro tons de verde, da maior (tom calmo) para a menor, sempre com nome ao lado */
+  --meso-1: #1f7a5e;
+  --meso-2: #4fae8c;
+  --meso-3: #94d4ba;
+  --meso-4: #cdeadd;
   --chart-surface: #ffffff;
   --chart-grid: rgb(13 25 22 / 0.08);
   --chart-axis: rgb(13 25 22 / 0.55);
@@ -82,6 +94,16 @@
   --sector-serv: #3987e5;
   --sector-adm: #d55181;
   --chart-point: #3987e5;
+  /* Áreas grandes em tom calmo; o "resto" em neutro, para não cansar a vista no escuro */
+  --conc-1: #237a5d;
+  --conc-2: #4fae8c;
+  --conc-3: #2c3b36;
+  --conc-pop: #199e70;
+  --conc-pib: #c0801a;
+  --meso-1: #237a5d;
+  --meso-2: #4fae8c;
+  --meso-3: #86cfb2;
+  --meso-4: #c0e8d7;
   --chart-surface: #0d1916;
   --chart-grid: rgb(255 255 255 / 0.07);
   --chart-axis: rgb(243 239 229 / 0.55);
